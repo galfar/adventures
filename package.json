@@ -2,7 +2,7 @@
   "name": "adventures",
   "private": true,
   "version": "0.1.0",
-  "description": "Gamebook-style adventure framework: story format, engine, player (and later editor).",
+  "description": "Gamebook-style adventure framework: story format, game engine, web player and editor.",
   "type": "module",
   "scripts": {
     "template": "node scripts/build-template.mjs",
