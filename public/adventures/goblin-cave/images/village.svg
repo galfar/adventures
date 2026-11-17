@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420">
+  <rect width="800" height="420" fill="#e9c98a"/>
+  <circle cx="640" cy="95" r="46" fill="#f6e3ae"/>
+  <path d="M0 260 Q150 190 300 250 T600 230 T800 250 V420 H0Z" fill="#b89455"/>
+  <path d="M0 310 Q200 270 420 310 T800 300 V420 H0Z" fill="#8f7440"/>
+  <g fill="#6b4a2b">
+    <rect x="130" y="220" width="110" height="90"/>
+    <rect x="300" y="190" width="150" height="120"/>
+    <rect x="520" y="230" width="100" height="80"/>
+    <rect x="352" y="120" width="46" height="70"/>
+  </g>
+  <g fill="#8c2a1c">
+    <path d="M115 222 L185 165 L255 222Z"/>
+    <path d="M285 192 L375 150 L465 192Z"/>
+    <path d="M340 122 L375 80 L410 122Z"/>
+    <path d="M505 232 L570 180 L635 232Z"/>
+  </g>
+  <g fill="#f6e3ae">
+    <rect x="150" y="245" width="24" height="26"/>
+    <rect x="196" y="245" width="24" height="26"/>
+    <rect x="322" y="220" width="26" height="30"/>
+    <rect x="402" y="220" width="26" height="30"/>
+    <circle cx="375" cy="150" r="12"/>
+    <rect x="556" y="255" width="26" height="26"/>
+  </g>
+  <path d="M360 310 h30 v-48 a15 15 0 0 0 -30 0z" fill="#3b2715"/>
+  <path d="M330 420 Q360 350 375 310 Q395 350 470 420Z" fill="#c9a96a"/>
+</svg>

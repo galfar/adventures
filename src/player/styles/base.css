@@ -1,0 +1,593 @@
+/*
+ * Layout of the player, shared by all visual styles.
+ * This file contains no colours or fonts of its own: everything that makes a style
+ * look different is a variable set in the theme-*.css files.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 0.6em;
+  font-family: var(--font-title);
+  font-variant: var(--title-variant, normal);
+  letter-spacing: var(--title-spacing, normal);
+  text-transform: var(--title-transform, none);
+  color: var(--title-ink);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: 2rem;
+  text-align: center;
+}
+
+h2 {
+  font-size: 1.45rem;
+}
+
+h3 {
+  font-size: 1.2rem;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+.muted {
+  color: var(--ink-soft);
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- Status bar ---------------------------------------------------------------- */
+
+.hud {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem max(0.5rem, env(safe-area-inset-right)) 0.35rem max(0.5rem, env(safe-area-inset-left));
+  background: var(--hud-bg);
+  color: var(--hud-ink);
+  border-bottom: var(--hud-border);
+}
+
+.hud-stats {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.stat-label {
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  display: inline-block;
+  width: 4.5rem;
+  height: 0.6rem;
+  overflow: hidden;
+  background: var(--bar-bg);
+  border-radius: var(--radius-small);
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+  background: var(--hp);
+  transition: width 0.3s ease;
+}
+
+.bar-enemy > span {
+  background: var(--enemy-hp);
+}
+
+.icon-button {
+  position: relative;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+  background: transparent;
+  border: var(--button-border);
+  border-color: color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: var(--radius-small);
+}
+
+.badge {
+  position: absolute;
+  top: -0.3rem;
+  right: -0.3rem;
+  min-width: 1.25rem;
+  padding: 0 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  font-family: var(--font-body);
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: 99px;
+}
+
+/* ---- The page ------------------------------------------------------------------ */
+
+.book {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1rem 0.6rem calc(3rem + env(safe-area-inset-bottom));
+}
+
+.page {
+  position: relative;
+  padding: var(--page-padding, clamp(1.1rem, 4.5vw, 2.25rem));
+  background: var(--paper-bg);
+  border: var(--page-border);
+  border-radius: var(--radius);
+  box-shadow: var(--page-shadow);
+}
+
+.page-enter {
+  animation: page-enter 0.35s ease-out;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+}
+
+.page-image {
+  margin: 0 0 1.1rem;
+}
+
+.page-image img {
+  width: 100%;
+  max-height: 45vh;
+  object-fit: cover;
+  border: var(--image-border);
+  border-radius: var(--radius-small);
+}
+
+.page-text {
+  /* Keeps a theme's floated drop cap inside the text block */
+  display: flow-root;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+.byline {
+  text-align: center;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.divider {
+  height: 1.1rem;
+  margin: 1.2rem auto;
+  background: var(--accent);
+  -webkit-mask: var(--divider-mask) center / contain no-repeat;
+  mask: var(--divider-mask) center / contain no-repeat;
+}
+
+.notices {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notice {
+  padding: 0.45rem 0.8rem;
+  background: var(--note-bg);
+  border-left: 4px solid var(--ink-soft);
+  border-radius: var(--radius-small);
+}
+
+.notice-good {
+  border-left-color: var(--good);
+}
+
+.notice-bad {
+  border-left-color: var(--bad);
+}
+
+/* ---- Buttons ------------------------------------------------------------------- */
+
+.actions {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 3rem;
+  padding: 0.65rem 1rem;
+  text-align: left;
+  background: var(--button-bg);
+  color: var(--button-ink);
+  border: var(--button-border);
+  border-radius: var(--radius-small);
+  transition:
+    background-color 0.15s,
+    transform 0.05s;
+}
+
+.action:hover:not(:disabled) {
+  background: var(--button-hover-bg);
+}
+
+.action:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action.primary {
+  justify-content: center;
+  text-align: center;
+  font-weight: 700;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+
+.action.primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.12);
+}
+
+.action.small {
+  flex: none;
+  min-height: 2.75rem;
+  padding: 0.3rem 0.9rem;
+}
+
+.hint {
+  display: block;
+  font-size: 0.85em;
+  font-style: italic;
+}
+
+/* ---- Fight --------------------------------------------------------------------- */
+
+.combat {
+  margin-top: 1.2rem;
+  padding: 1rem;
+  background: var(--note-bg);
+  border: var(--button-border);
+  border-radius: var(--radius-small);
+}
+
+.combat h3 {
+  text-align: center;
+}
+
+.fighters {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 0.5rem;
+}
+
+.fighter {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  min-width: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.fighter .bar {
+  width: min(100%, 8rem);
+}
+
+.fighter-stats {
+  font-size: 0.9em;
+  white-space: pre;
+}
+
+.enemy-image {
+  width: 5rem;
+  height: 5rem;
+  object-fit: cover;
+  border: var(--image-border);
+  border-radius: var(--radius-small);
+}
+
+.versus {
+  align-self: center;
+  font-size: 1.5rem;
+}
+
+.round-log {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+}
+
+.round-number {
+  text-align: center;
+  font-family: var(--font-title);
+  color: var(--title-ink);
+}
+
+/* Name on its own line, then: die + attack − defense → result */
+.strike {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 0.1rem 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.strike-who {
+  grid-column: 1 / -1;
+  font-weight: 700;
+}
+
+.strike-result.hit {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.die {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  font-weight: 700;
+  font-family: var(--font-body);
+  background: var(--die-bg);
+  color: var(--die-ink);
+  border: 2px solid var(--die-ink);
+  border-radius: 0.4rem;
+  animation: die-roll 0.45s ease-out;
+}
+
+@keyframes die-roll {
+  from {
+    transform: rotate(-200deg) scale(0.4);
+    opacity: 0;
+  }
+}
+
+.combat-outcome {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-family: var(--font-title);
+  font-size: 1.3rem;
+  color: var(--good);
+}
+
+.combat-outcome.lose {
+  color: var(--bad);
+}
+
+/* ---- Endings ------------------------------------------------------------------- */
+
+.finale {
+  text-align: center;
+}
+
+.finale h3 {
+  font-size: 1.7rem;
+}
+
+.finale-dead h3,
+.finale-defeat h3 {
+  color: var(--bad);
+}
+
+/* ---- Hero creation ------------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1.4rem;
+}
+
+.card {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  padding: 0.8rem;
+  text-align: left;
+  background: var(--button-bg);
+  color: var(--button-ink);
+  border: var(--button-border);
+  border-radius: var(--radius-small);
+}
+
+.card.static {
+  margin-bottom: 1.4rem;
+}
+
+button.card:hover {
+  background: var(--button-hover-bg);
+}
+
+.card[aria-pressed='true'] {
+  background: var(--button-hover-bg);
+  outline: 3px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.card-title {
+  font-family: var(--font-title);
+  font-size: 1.15rem;
+  color: var(--title-ink);
+}
+
+.card-text,
+.kit-items {
+  margin: 0;
+  font-size: 0.92em;
+}
+
+.kit-items {
+  font-style: italic;
+}
+
+/* ---- Dialogs ------------------------------------------------------------------- */
+
+.dialog {
+  width: min(32rem, calc(100vw - 1.5rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  color: var(--ink);
+  background: var(--dialog-bg);
+  border: var(--page-border);
+  border-radius: var(--radius);
+  box-shadow: var(--page-shadow);
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+.dialog-body {
+  padding: 1.2rem;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.bag-items {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bag-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--note-bg);
+  border-radius: var(--radius-small);
+}
+
+.bag-item img {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: cover;
+}
+
+.bag-item-text {
+  flex: 1;
+  display: grid;
+  min-width: 0;
+}
+
+.bonus {
+  margin-left: 0.6rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* ---- Library (list of adventures) ---------------------------------------------- */
+
+.library-list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.library-list .card {
+  text-decoration: none;
+}
+
+.file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.error {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

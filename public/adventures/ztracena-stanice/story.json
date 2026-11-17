@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "id": "sample-ztracena-stanice",
+  "title": "Ztracená stanice",
+  "author": "Ukázka Adventures",
+  "description": "Vesmírná stanice Kepler-9 přestala odpovídat. Letíš zjistit proč.",
+  "language": "cs",
+  "theme": "scifi",
+  "cover": "images/station.svg",
+  "startPage": "dok",
+  "hero": {
+    "stats": { "hp": 15, "attack": 3, "defense": 2 },
+    "choose": { "count": 1, "from": ["lekarnicka", "pacidlo"] }
+  },
+  "professions": [],
+  "items": [
+    {
+      "id": "lekarnicka",
+      "name": "Lékárnička",
+      "description": "Vyléčí 6 životů.",
+      "use": { "effects": [{ "type": "changeStat", "stat": "hp", "by": 6 }] }
+    },
+    { "id": "pacidlo", "name": "Páčidlo", "description": "Těžké a spolehlivé.", "bonus": { "attack": 1 } },
+    { "id": "karta", "name": "Přístupová karta", "description": "Karta s nápisem ŘÍDICÍ MÍSTNOST." }
+  ],
+  "counters": [],
+  "pages": [
+    {
+      "id": "dok",
+      "title": "Přistávací dok",
+      "image": "images/station.svg",
+      "text": "Tvoje loď dosedla v doku stanice Kepler-9. Světla blikají, nikde ani živáčka. Někde v dálce hučí ventilace.",
+      "actions": [
+        { "id": "dok-ridici", "label": "Jít k řídicí místnosti", "target": "chodba" },
+        { "id": "dok-sklad", "label": "Prozkoumat sklad", "target": "sklad" }
+      ],
+      "pos": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "sklad",
+      "title": "Sklad",
+      "text": "Regály jsou převrácené a bedny rozházené po podlaze, jako by tu někdo něco hledal.",
+      "onFirstVisit": [
+        { "type": "message", "text": "Pod jednou bednou leží přístupová karta." },
+        { "type": "giveItem", "item": "karta" }
+      ],
+      "actions": [{ "id": "sklad-zpet", "label": "Vrátit se do doku", "target": "dok" }],
+      "pos": { "x": -260, "y": 0 }
+    },
+    {
+      "id": "chodba",
+      "title": "Chodba",
+      "text": "Dlouhá chodba končí masivními dveřmi. Vedle nich svítí červeně čtečka karet.",
+      "actions": [
+        {
+          "id": "chodba-dvere",
+          "label": "Otevřít dveře kartou",
+          "target": "robot",
+          "when": { "type": "hasItem", "item": "karta" },
+          "lockedHint": "Dveře jsou zamčené. Potřebuješ přístupovou kartu."
+        },
+        { "id": "chodba-zpet", "label": "Vrátit se do doku", "target": "dok" }
+      ],
+      "pos": { "x": 0, "y": 180 }
+    },
+    {
+      "id": "robot",
+      "title": "Řídicí místnost",
+      "text": "Dveře se odsunou. Uprostřed místnosti se otočí strážní robot. Oči mu červeně zablikají: „NARUŠITEL. NARUŠITEL.“",
+      "combat": {
+        "enemy": { "name": "Porouchaný strážní robot", "hp": 9, "attack": 3, "defense": 1 },
+        "onWin": { "target": "konec" },
+        "flee": { "target": "dok", "effects": [{ "type": "changeStat", "stat": "hp", "by": -2 }] }
+      },
+      "actions": [],
+      "pos": { "x": 0, "y": 360 }
+    },
+    {
+      "id": "konec",
+      "title": "Stanice žije",
+      "text": "Robot se s rachotem sesune k zemi. Zapínáš hlavní počítač a na obrazovce naskočí zpráva: „Posádka je v bezpečí v záchranných modulech. Děkujeme za restart.“\n\nMise splněna.",
+      "actions": [],
+      "ending": "victory",
+      "pos": { "x": 0, "y": 540 }
+    }
+  ]
+}

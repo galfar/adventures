@@ -1,0 +1,74 @@
+/*
+ * Neutral: a clean, modern look without any genre. Light by default,
+ * dark when the device is set to dark mode.
+ */
+
+[data-theme='neutral'] {
+  --bg: #eef0f3;
+  --ink: #1f2933;
+  --ink-soft: #5b6672;
+  --title-ink: #111827;
+  --accent: #2563eb;
+  --accent-ink: #ffffff;
+  --good: #15803d;
+  --bad: #b91c1c;
+
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+  --font-title: var(--font-body);
+
+  --paper-bg: #ffffff;
+  --page-border: 1px solid #d5d9e0;
+  --page-shadow: 0 0.25rem 1.25rem rgb(15 23 42 / 8%);
+  --radius: 14px;
+  --radius-small: 10px;
+  --image-border: none;
+
+  --hud-bg: #ffffff;
+  --hud-ink: #1f2933;
+  --hud-border: 1px solid #d5d9e0;
+  --bar-bg: #e2e5ea;
+  --hp: #dc2626;
+  --enemy-hp: #7c3aed;
+
+  --button-bg: #f3f5f8;
+  --button-ink: var(--ink);
+  --button-border: 1px solid #cfd4dc;
+  --button-hover-bg: #e3e8f0;
+  --note-bg: #f3f5f8;
+  --dialog-bg: #ffffff;
+  --die-bg: #ffffff;
+  --die-ink: #1f2933;
+
+  /* A plain short line */
+  --divider-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 20'%3E%3Crect x='90' y='9' width='60' height='2' rx='1'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme='neutral'] {
+    --bg: #111418;
+    --ink: #e5e7eb;
+    --ink-soft: #9aa3af;
+    --title-ink: #f9fafb;
+    --accent: #60a5fa;
+    --accent-ink: #0b1220;
+    --good: #4ade80;
+    --bad: #f87171;
+
+    --paper-bg: #1b1f25;
+    --page-border: 1px solid #2c323b;
+    --page-shadow: none;
+
+    --hud-bg: #1b1f25;
+    --hud-ink: #e5e7eb;
+    --hud-border: 1px solid #2c323b;
+    --bar-bg: #2c323b;
+
+    --button-bg: #242a32;
+    --button-border: 1px solid #39414c;
+    --button-hover-bg: #2f3741;
+    --note-bg: #242a32;
+    --dialog-bg: #1b1f25;
+    --die-bg: #e5e7eb;
+    --die-ink: #111418;
+  }
+}

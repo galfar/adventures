@@ -1,0 +1,117 @@
+/*
+ * Fantasy: an old book. Parchment page on dark leather, a bookish serif font,
+ * a red drop cap, a double frame with corner studs, and an ornament between
+ * the text and the choices. This is the default style.
+ */
+
+[data-theme='fantasy'] {
+  /* Colours */
+  --bg: radial-gradient(ellipse at 50% 0%, #523723 0%, #2a1a0f 60%, #1b1009 100%) #2a1a0f;
+  --ink: #2c1d0d;
+  --ink-soft: #6b5334;
+  --title-ink: #5c1a10;
+  --accent: #8c1f1f;
+  --accent-ink: #fbf0d6;
+  --good: #3f6b2a;
+  --bad: #9c2020;
+  --frame: #7a5a2e;
+
+  /* Fonts: bookish serifs that exist on Windows, macOS, Linux and Android */
+  --font-body: 'Palatino Linotype', Palatino, 'Book Antiqua', 'URW Palladio L', 'Noto Serif', 'Droid Serif', Georgia, serif;
+  --font-title: var(--font-body);
+  --title-variant: small-caps;
+  --title-spacing: 0.04em;
+
+  /* The page: parchment colour, a mottled paper texture, and darker "burnt" edges */
+  --paper-bg:
+    radial-gradient(ellipse at center, transparent 55%, rgb(120 78 28 / 30%) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .47 0 0 0 0 .31 0 0 0 0 .12 .45 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    #f1dfb6;
+  --page-border: 1px solid #5d4321;
+  --page-shadow: 0 0.8rem 2.5rem rgb(0 0 0 / 55%);
+  --page-padding: clamp(1.6rem, 5vw, 2.6rem);
+  --radius: 3px;
+  --radius-small: 3px;
+  --image-border: 2px solid var(--frame);
+
+  /* Status bar */
+  --hud-bg: #3a2616;
+  --hud-ink: #f1dfb6;
+  --hud-border: 2px solid var(--frame);
+  --bar-bg: rgb(0 0 0 / 30%);
+  --hp: #b3261e;
+  --enemy-hp: #6d3fa0;
+
+  /* Buttons, notes, dialogs */
+  --button-bg: rgb(122 90 46 / 12%);
+  --button-ink: var(--ink);
+  --button-border: 1px solid var(--frame);
+  --button-hover-bg: rgb(122 90 46 / 28%);
+  --note-bg: rgb(122 90 46 / 14%);
+  --dialog-bg: #f1dfb6;
+  --die-bg: #fbf3dc;
+  --die-ink: #2c1d0d;
+
+  /* Ornament between text and choices: a diamond between two lines */
+  --divider-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 20'%3E%3Cpath d='M0 9.5h92v1H0zM148 9.5h92v1h-92zM120 1l9 9-9 9-9-9zM100 6l4 4-4 4-4-4zM140 6l4 4-4 4-4-4z'/%3E%3C/svg%3E");
+}
+
+/* Double frame inside the page edge */
+[data-theme='fantasy'] .page::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 2px solid var(--frame);
+  outline: 1px solid var(--frame);
+  outline-offset: -6px;
+  pointer-events: none;
+}
+
+/* A stud in each corner of the frame */
+[data-theme='fantasy'] .page::after {
+  --stud: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0l10 10-10 10L0 10z' fill='%237a5a2e'/%3E%3Cpath d='M10 5l5 5-5 5-5-5z' fill='%23f1dfb6'/%3E%3Cpath d='M10 8l2 2-2 2-2-2z' fill='%238c1f1f'/%3E%3C/svg%3E");
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background:
+    var(--stud) left top / 20px no-repeat,
+    var(--stud) right top / 20px no-repeat,
+    var(--stud) left bottom / 20px no-repeat,
+    var(--stud) right bottom / 20px no-repeat;
+  pointer-events: none;
+}
+
+/* Everything inside the page must sit above the frame decorations */
+[data-theme='fantasy'] .page > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Red drop cap at the start of each page's text */
+[data-theme='fantasy'] .page-text.lead > p:first-child::first-letter {
+  float: left;
+  padding: 0.08em 0.1em 0 0;
+  font-size: 3.3em;
+  line-height: 0.8;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* A small red diamond in front of every choice */
+[data-theme='fantasy'] .actions > .action:not(.primary)::before {
+  content: '';
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  background: var(--accent);
+  transform: rotate(45deg);
+}
+
+[data-theme='fantasy'] .action.primary {
+  box-shadow: inset 0 0 0 2px rgb(251 240 214 / 35%);
+  letter-spacing: 0.03em;
+}
+
+[data-theme='fantasy'] .dialog {
+  background: var(--paper-bg);
+}

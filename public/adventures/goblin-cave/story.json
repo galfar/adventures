@@ -1,0 +1,343 @@
+{
+  "format": 1,
+  "id": "sample-goblin-cave",
+  "title": "The Goblin Cave",
+  "author": "Adventures sample",
+  "description": "Goblins have stolen the golden crown of Oakham. Somebody has to bring it back.",
+  "language": "en",
+  "theme": "fantasy",
+  "cover": "images/village.svg",
+  "startPage": "village",
+  "hero": { "stats": { "hp": 20, "attack": 3, "defense": 2 } },
+  "professions": [
+    {
+      "id": "knight",
+      "name": "Knight",
+      "description": "Strong and well armoured. Solves most problems with a sword.",
+      "stats": { "hp": 22, "attack": 3, "defense": 3 },
+      "items": [{ "item": "sword" }],
+      "choose": { "count": 1, "from": ["potion", "torch", "rope"] }
+    },
+    {
+      "id": "thief",
+      "name": "Thief",
+      "description": "Quiet and quick. Locks are only a suggestion.",
+      "stats": { "hp": 16, "attack": 2, "defense": 2 },
+      "items": [{ "item": "dagger" }],
+      "choose": { "count": 2, "from": ["potion", "torch", "rope"] }
+    },
+    {
+      "id": "wizard",
+      "name": "Wizard",
+      "description": "Weak in body, dangerous with a staff full of sparks.",
+      "stats": { "hp": 14, "attack": 3, "defense": 1 },
+      "items": [{ "item": "staff" }, { "item": "potion" }],
+      "choose": { "count": 1, "from": ["torch", "rope"] }
+    }
+  ],
+  "items": [
+    { "id": "sword", "name": "Sword", "description": "A good steel blade.", "bonus": { "attack": 1 } },
+    { "id": "dagger", "name": "Dagger", "description": "Short and sharp.", "bonus": { "attack": 1 } },
+    { "id": "staff", "name": "Spark staff", "description": "Crackles with lightning.", "bonus": { "attack": 2 } },
+    { "id": "shield", "name": "Wooden shield", "description": "Dented, but it holds.", "bonus": { "defense": 1 } },
+    {
+      "id": "potion",
+      "name": "Healing potion",
+      "description": "Tastes of mint. Heals 8 hit points.",
+      "use": { "effects": [{ "type": "changeStat", "stat": "hp", "by": 8 }] }
+    },
+    { "id": "torch", "name": "Torch", "description": "Light for dark places." },
+    { "id": "rope", "name": "Rope", "description": "Ten metres of strong rope." },
+    { "id": "key", "name": "Rusty key", "description": "It must open something." },
+    { "id": "amulet", "name": "Silver amulet", "description": "Feels warm and protective.", "bonus": { "defense": 1 } },
+    { "id": "crown", "name": "Crown of Oakham", "description": "Heavy, golden and finally found." }
+  ],
+  "counters": [{ "id": "gold", "name": "Gold", "start": 5, "min": 0, "show": true, "icon": "💰" }],
+  "pages": [
+    {
+      "id": "village",
+      "title": "Oakham",
+      "image": "images/village.svg",
+      "text": "You stand on the square of Oakham village. Last night goblins crept in and stole the golden crown from the town hall.\n\n\"Bring it back,\" says the old mayor, \"and the whole village will remember your name.\"",
+      "extraTexts": [
+        { "when": { "type": "visited", "page": "forest" }, "text": "The villagers watch you with hope. The crown is still missing." }
+      ],
+      "actions": [
+        { "id": "village-shop", "label": "Visit the trader", "target": "shop" },
+        { "id": "village-forest", "label": "Take the path into the forest", "target": "forest" }
+      ],
+      "pos": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "shop",
+      "title": "The trader",
+      "text": "A round man behind the counter rubs his hands. \"Shields, potions, the best in Oakham! Only for gold, of course.\"",
+      "actions": [
+        {
+          "id": "shop-shield",
+          "label": "Buy a wooden shield (8 gold)",
+          "when": { "type": "compare", "left": { "counter": "gold" }, "op": ">=", "right": 8 },
+          "lockedHint": "You need 8 gold.",
+          "once": true,
+          "effects": [
+            { "type": "changeCounter", "counter": "gold", "by": -8 },
+            { "type": "giveItem", "item": "shield" }
+          ]
+        },
+        {
+          "id": "shop-potion",
+          "label": "Buy a healing potion (4 gold)",
+          "when": { "type": "compare", "left": { "counter": "gold" }, "op": ">=", "right": 4 },
+          "lockedHint": "You need 4 gold.",
+          "effects": [
+            { "type": "changeCounter", "counter": "gold", "by": -4 },
+            { "type": "giveItem", "item": "potion" }
+          ]
+        },
+        { "id": "shop-leave", "label": "Go back to the square", "target": "village" }
+      ],
+      "pos": { "x": -260, "y": 0 }
+    },
+    {
+      "id": "forest",
+      "title": "The forest path",
+      "image": "images/forest.svg",
+      "text": "The path winds between old oaks. Goblin footprints lead north, towards the hills. Something rustles in the bushes beside the path.",
+      "onFirstVisit": [
+        { "type": "message", "text": "A small pouch lies in the mud. Somebody was in a hurry." },
+        { "type": "changeCounter", "counter": "gold", "by": 4 }
+      ],
+      "extraTexts": [{ "when": { "type": "won", "page": "wolf" }, "text": "The bushes are quiet now." }],
+      "actions": [
+        { "id": "forest-cave", "label": "Go north to the hills", "target": "cave-mouth" },
+        {
+          "id": "forest-bushes",
+          "label": "Look into the bushes",
+          "target": "wolf",
+          "when": { "type": "not", "cond": { "type": "won", "page": "wolf" } }
+        },
+        { "id": "forest-village", "label": "Return to the village", "target": "village" }
+      ],
+      "pos": { "x": 0, "y": 180 }
+    },
+    {
+      "id": "wolf",
+      "title": "The wolf",
+      "text": "A grey wolf jumps out of the bushes and shows its teeth!",
+      "combat": {
+        "enemy": { "name": "Grey wolf", "hp": 7, "attack": 2, "defense": 0 },
+        "onWin": {
+          "effects": [
+            { "type": "message", "text": "In the wolf's den something glints between the bones." },
+            { "type": "giveItem", "item": "key" }
+          ]
+        },
+        "flee": { "target": "forest", "effects": [{ "type": "changeStat", "stat": "hp", "by": -2 }] }
+      },
+      "extraTexts": [{ "when": { "type": "won", "page": "wolf" }, "text": "The wolf will not bother anybody again." }],
+      "actions": [{ "id": "wolf-back", "label": "Go back to the path", "target": "forest" }],
+      "pos": { "x": 260, "y": 180 }
+    },
+    {
+      "id": "cave-mouth",
+      "title": "The cave",
+      "image": "images/cave.svg",
+      "text": "A black hole opens in the hillside. Cold air and the smell of smoke come out of it. It is completely dark inside.",
+      "actions": [
+        {
+          "id": "cave-torch",
+          "label": "Light the torch and go in",
+          "target": "tunnel",
+          "when": { "type": "hasItem", "item": "torch" }
+        },
+        {
+          "id": "cave-dark",
+          "label": "Feel your way in the dark",
+          "target": "tunnel",
+          "effects": [
+            {
+              "type": "chance",
+              "percent": 50,
+              "then": [
+                { "type": "message", "text": "You trip over a stone and hit your head." },
+                { "type": "changeStat", "stat": "hp", "by": -3 }
+              ]
+            }
+          ]
+        },
+        { "id": "cave-back", "label": "Go back to the forest", "target": "forest" }
+      ],
+      "pos": { "x": 0, "y": 360 }
+    },
+    {
+      "id": "tunnel",
+      "title": "The fork",
+      "text": "The tunnel splits in two. From the right you hear grunting and the clink of metal. The left tunnel is silent.",
+      "extraTexts": [
+        {
+          "when": { "type": "hasItem", "item": "torch" },
+          "text": "In the light of your torch you see a sign scratched into the left wall: a stick figure falling into a hole."
+        }
+      ],
+      "actions": [
+        { "id": "tunnel-left", "label": "Go left", "target": "pit" },
+        { "id": "tunnel-right", "label": "Go right", "target": "guard" },
+        { "id": "tunnel-out", "label": "Leave the cave", "target": "cave-mouth" }
+      ],
+      "pos": { "x": 0, "y": 540 }
+    },
+    {
+      "id": "pit",
+      "title": "The pit",
+      "text": "The floor ends at the edge of a deep pit. Far below, something shines.",
+      "actions": [
+        {
+          "id": "pit-climb",
+          "label": "Climb down the rope",
+          "target": "pit-bottom",
+          "when": { "type": "hasItem", "item": "rope" },
+          "lockedHint": "Too deep to climb without a rope."
+        },
+        { "id": "pit-back", "label": "Go back to the fork", "target": "tunnel" }
+      ],
+      "pos": { "x": -260, "y": 540 }
+    },
+    {
+      "id": "pit-bottom",
+      "title": "Bottom of the pit",
+      "image": "images/treasure.svg",
+      "text": "You stand among old bones and broken barrels. In the corner sits an iron chest with a heavy lock.",
+      "onFirstVisit": [
+        { "type": "message", "text": "Coins are scattered on the ground." },
+        { "type": "changeCounter", "counter": "gold", "by": 10 }
+      ],
+      "extraTexts": [
+        {
+          "when": { "type": "or", "any": [{ "type": "did", "action": "chest-key" }, { "type": "did", "action": "chest-pick" }] },
+          "text": "The chest stands open and empty."
+        }
+      ],
+      "actions": [
+        {
+          "id": "chest-key",
+          "label": "Open the chest with the rusty key",
+          "when": {
+            "type": "and",
+            "all": [{ "type": "hasItem", "item": "key" }, { "type": "not", "cond": { "type": "did", "action": "chest-pick" } }]
+          },
+          "once": true,
+          "effects": [
+            { "type": "takeItem", "item": "key" },
+            { "type": "giveItem", "item": "amulet" }
+          ]
+        },
+        {
+          "id": "chest-pick",
+          "label": "Pick the lock",
+          "when": {
+            "type": "and",
+            "all": [
+              { "type": "profession", "profession": "thief" },
+              { "type": "not", "cond": { "type": "did", "action": "chest-key" } }
+            ]
+          },
+          "once": true,
+          "effects": [{ "type": "giveItem", "item": "amulet" }]
+        },
+        { "id": "pit-up", "label": "Climb back up", "target": "pit" }
+      ],
+      "pos": { "x": -520, "y": 540 }
+    },
+    {
+      "id": "guard",
+      "title": "The guard",
+      "image": "images/goblin.svg",
+      "text": "A goblin with a rusty spear sits by a small fire. It jumps up and screams when it sees you!",
+      "combat": {
+        "enemy": { "name": "Goblin guard", "image": "images/goblin.svg", "hp": 10, "attack": 3, "defense": 1 },
+        "onWin": { "effects": [{ "type": "changeCounter", "counter": "gold", "by": 3 }] },
+        "flee": { "target": "tunnel", "effects": [{ "type": "changeStat", "stat": "hp", "by": -2 }] }
+      },
+      "extraTexts": [{ "when": { "type": "won", "page": "guard" }, "text": "The guard lies by the fire. The way deeper is free." }],
+      "actions": [
+        { "id": "guard-on", "label": "Go deeper into the cave", "target": "hall" },
+        { "id": "guard-back", "label": "Go back to the fork", "target": "tunnel" }
+      ],
+      "pos": { "x": 260, "y": 540 }
+    },
+    {
+      "id": "hall",
+      "title": "The throne hall",
+      "text": "You look into a large hall. On a throne of bones snores the Goblin King, and on his head sits the crown of Oakham.",
+      "actions": [
+        {
+          "id": "hall-sneak",
+          "label": "Sneak up and take the crown",
+          "effects": [
+            {
+              "type": "if",
+              "when": { "type": "profession", "profession": "thief" },
+              "then": [
+                { "type": "message", "text": "Your fingers are light as a feather. The king does not even twitch." },
+                { "type": "giveItem", "item": "crown" },
+                { "type": "goto", "page": "victory" }
+              ]
+            },
+            {
+              "type": "chance",
+              "percent": 30,
+              "then": [
+                { "type": "message", "text": "You hold your breath... and it works!" },
+                { "type": "giveItem", "item": "crown" },
+                { "type": "goto", "page": "victory" }
+              ],
+              "else": [
+                { "type": "message", "text": "A bone cracks under your foot. The king opens his eyes!" },
+                { "type": "goto", "page": "king" }
+              ]
+            }
+          ]
+        },
+        { "id": "hall-fight", "label": "Challenge the Goblin King", "target": "king" },
+        { "id": "hall-back", "label": "Go back quietly", "target": "guard" }
+      ],
+      "pos": { "x": 260, "y": 720 }
+    },
+    {
+      "id": "king",
+      "title": "The Goblin King",
+      "image": "images/goblin.svg",
+      "text": "The Goblin King rises from his throne, twice as big as the guard, and lifts a huge club.",
+      "combat": {
+        "enemy": { "name": "Goblin King", "image": "images/goblin.svg", "hp": 16, "attack": 4, "defense": 2 },
+        "onWin": { "effects": [{ "type": "giveItem", "item": "crown" }], "target": "victory" },
+        "onLose": { "target": "captured" }
+      },
+      "actions": [],
+      "pos": { "x": 520, "y": 720 }
+    },
+    {
+      "id": "victory",
+      "title": "Hero of Oakham",
+      "image": "images/village.svg",
+      "text": "You walk out of the cave with the crown under your arm. In the evening the whole village celebrates, and the mayor shakes your hand until it hurts.",
+      "extraTexts": [
+        {
+          "when": { "type": "compare", "left": { "counter": "gold" }, "op": ">=", "right": 15 },
+          "text": "And with the gold from the cave you buy a little house by the square."
+        }
+      ],
+      "actions": [],
+      "ending": "victory",
+      "pos": { "x": 520, "y": 900 }
+    },
+    {
+      "id": "captured",
+      "title": "In the cage",
+      "text": "You wake up in a cage of bones. The goblins dance around the fire and the king wears the crown and your boots.\n\nMaybe somebody else will try tomorrow.",
+      "actions": [],
+      "ending": "defeat",
+      "pos": { "x": 780, "y": 720 }
+    }
+  ]
+}

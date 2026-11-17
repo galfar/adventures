@@ -1,0 +1,62 @@
+import type { Messages } from './en.ts';
+
+/** České texty přehrávače. Části `{name}` doplňuje kód. */
+export const cs: Messages = {
+  libraryTitle: 'Dobrodružství',
+  libraryIntro: 'Vyber si dobrodružství, které chceš hrát.',
+  openFile: 'Otevřít soubor s dobrodružstvím (.zip)',
+  loading: 'Načítám…',
+  loadError: 'Dobrodružství se nepodařilo načíst.',
+
+  author: 'Autor: {author}',
+  continueGame: 'Pokračovat',
+  newGame: 'Nová hra',
+  newGameConfirm: 'Začít novou hru? O uložený postup přijdeš.',
+  otherAdventures: 'Další dobrodružství',
+  chooseProfession: 'Kdo jsi?',
+  yourHero: 'Tvůj hrdina',
+  chooseItems: 'Co si vezmeš na cestu? Počet věcí k výběru: {count}.',
+  begin: 'Vyrazit za dobrodružstvím',
+
+  hp: 'Životy',
+  maxHp: 'Maximum životů',
+  attack: 'Útok',
+  defense: 'Obrana',
+
+  bag: 'Batoh',
+  bagEmpty: 'Batoh je prázdný.',
+  use: 'Použít',
+  close: 'Zavřít',
+  menu: 'Nabídka',
+  restart: 'Začít znovu',
+  restartConfirm: 'Začít znovu od začátku? O dosavadní postup v tomto dobrodružství přijdeš.',
+  toTitle: 'Zpět na titulní stranu',
+  yes: 'Ano',
+  no: 'Ne',
+
+  fight: 'Souboj!',
+  you: 'Ty',
+  round: '{n}. kolo',
+  rollDice: 'Hoď kostkou!',
+  nextRound: 'Další kolo',
+  flee: 'Utéct',
+  hit: 'zásah za {n}',
+  noDamage: 'bez zranění',
+  fightWon: 'Souboj je vyhraný!',
+  fightLost: 'Souboj je prohraný…',
+  next: 'Pokračovat',
+
+  theEnd: 'Konec',
+  victory: 'Vítězství!',
+  defeat: 'Porážka',
+  playAgain: 'Hrát znovu',
+  deadTitle: 'Tvůj hrdina padl',
+  deadText: 'Tady tvoje dobrodružství končí.',
+  tryAgain: 'Zkusit znovu',
+  deadEnd: 'Odtud příběh zatím nepokračuje.',
+
+  itemGained: 'Získáváš: {item}',
+  itemLost: 'Ztrácíš: {item}',
+  itemUsed: 'Používáš: {item}',
+  brokenLink: 'Tahle cesta ještě není hotová.',
+};

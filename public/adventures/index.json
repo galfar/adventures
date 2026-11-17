@@ -1,0 +1,14 @@
+[
+  {
+    "path": "adventures/goblin-cave/",
+    "title": "The Goblin Cave",
+    "description": "Goblins have stolen the golden crown of Oakham. Somebody has to bring it back.",
+    "language": "en"
+  },
+  {
+    "path": "adventures/ztracena-stanice/",
+    "title": "Ztracená stanice",
+    "description": "Vesmírná stanice Kepler-9 přestala odpovídat. Letíš zjistit proč.",
+    "language": "cs"
+  }
+]

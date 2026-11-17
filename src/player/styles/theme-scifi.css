@@ -1,0 +1,85 @@
+/*
+ * Sci-fi: a ship's computer terminal. Dark panels on a faint grid, glowing cyan,
+ * cut-off corners, and headings in a technical monospace font.
+ */
+
+[data-theme='scifi'] {
+  --bg:
+    linear-gradient(rgb(53 224 255 / 5%) 1px, transparent 1px) 0 0 / 100% 28px,
+    linear-gradient(90deg, rgb(53 224 255 / 5%) 1px, transparent 1px) 0 0 / 28px 100%,
+    #060a12;
+  --ink: #d3e6f5;
+  --ink-soft: #8aa4ba;
+  --title-ink: #6fe9ff;
+  --accent: #35e0ff;
+  --accent-ink: #04121a;
+  --good: #5dff9b;
+  --bad: #ff6b7d;
+
+  --font-body: 'Segoe UI', system-ui, -apple-system, Roboto, 'Noto Sans', sans-serif;
+  --font-title: ui-monospace, 'Cascadia Mono', Consolas, 'Roboto Mono', 'DejaVu Sans Mono', monospace;
+  --title-transform: uppercase;
+  --title-spacing: 0.08em;
+
+  --paper-bg: linear-gradient(180deg, #0f1b2c, #0b1422);
+  --page-border: 1px solid #1f5a73;
+  --page-shadow:
+    0 0 0 1px rgb(53 224 255 / 12%),
+    0 0 2.2rem rgb(53 224 255 / 14%);
+  --radius: 0;
+  --radius-small: 0;
+  --image-border: 1px solid #1f5a73;
+
+  --hud-bg: #0b1422;
+  --hud-ink: #d3e6f5;
+  --hud-border: 1px solid #35e0ff;
+  --bar-bg: #1b2a3d;
+  --hp: #5dff9b;
+  --enemy-hp: #ff6b7d;
+
+  --button-bg: rgb(53 224 255 / 7%);
+  --button-ink: var(--ink);
+  --button-border: 1px solid #2a7c99;
+  --button-hover-bg: rgb(53 224 255 / 18%);
+  --note-bg: rgb(53 224 255 / 6%);
+  --dialog-bg: #0f1b2c;
+  --die-bg: #04121a;
+  --die-ink: #35e0ff;
+
+  /* A row of signal bars */
+  --divider-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 20'%3E%3Cpath d='M0 9h80v2H0zM160 9h80v2h-80zM90 6h8v8h-8zM104 6h8v8h-8zM118 3h4v14h-4zM128 6h8v8h-8zM142 6h8v8h-8z'/%3E%3C/svg%3E");
+}
+
+/* Cut-off corners on panels and buttons */
+[data-theme='scifi'] .action,
+[data-theme='scifi'] .card,
+[data-theme='scifi'] .icon-button {
+  clip-path: polygon(0.6rem 0, 100% 0, 100% calc(100% - 0.6rem), calc(100% - 0.6rem) 100%, 0 100%, 0 0.6rem);
+}
+
+[data-theme='scifi'] .card[aria-pressed='true'] {
+  outline: none;
+  background: rgb(53 224 255 / 24%);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+[data-theme='scifi'] h1,
+[data-theme='scifi'] h2,
+[data-theme='scifi'] h3 {
+  text-shadow: 0 0 0.7rem rgb(53 224 255 / 45%);
+}
+
+/* A glowing line along the top of each page */
+[data-theme='scifi'] .page {
+  border-top: 3px solid var(--accent);
+}
+
+[data-theme='scifi'] .action:not(.primary) {
+  border-left: 3px solid var(--accent);
+}
+
+[data-theme='scifi'] .action.primary {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-title);
+}
