@@ -1,10 +1,10 @@
 # Adventures: architecture of the player and the editor
 
-Status on 2026-11-17: **steps 1 and 2 are built.** Step 1 is the story format, game engine,
-player, two sample adventures and three visual styles. Step 2 is the first part of the editor:
-project list, page map, page panel, autosave, undo, trash, older versions, hints and
-play-testing. Blocks for conditions and effects, the item/counter/profession tables, and
-export are **designed here but not built yet**. Each section says which state it describes.
+Status on 2026-11-17: **steps 1 to 3 are built.** Step 1 is the story format, game engine,
+player, two sample adventures and three visual styles. Step 2 is the editor's project list,
+page map, page panel, autosave, undo, trash, older versions, hints and play-testing. Step 3 is
+blocks for conditions and effects, and the lists of items, counters and professions. Export
+and import are **designed here but not built yet**. Each section says which state it describes.
 
 ## 1. The big picture
 
@@ -66,14 +66,16 @@ tests/                          engine, ZIP and editor tests (Node's built-in te
 
 ### Tech stack and commands
 
-TypeScript, no UI framework, Vite for the dev server and the build. Development dependencies
-only: `typescript`, `vite`, `@types/node`. Before compression the built player is about 32 kB of
-JavaScript and 13 kB of CSS, and the editor about 52 kB and 8 kB.
+TypeScript, no UI framework, Vite for the dev server and the build. Development dependencies:
+`typescript`, `vite`, `@types/node`. The only runtime dependency is `blockly`, used by the editor
+alone. Before compression the built player is about 32 kB of JavaScript and 13 kB of CSS. The
+editor is about 80 kB and 10 kB, plus Blockly (about 640 kB and one 80 kB language file), which
+is fetched only when the block editor is first opened.
 
 | Command | What it does |
 |---|---|
 | `npm run dev` | player at http://localhost:5173, editor at http://localhost:5173/editor.html |
-| `npm test` | engine, ZIP and editor tests (27 tests) |
+| `npm test` | engine, ZIP, editor and block-conversion tests (34 tests) |
 | `npm run build` | type-check, then build the static site into `dist/` |
 
 ## 2. Story format (built)
@@ -297,18 +299,17 @@ Nothing plays sound yet. The design leaves room for it without changing what exi
 
 ### What is built and what is not
 
-| Built (step 2) | Not built yet |
+| Built (steps 2 and 3) | Not built yet |
 |---|---|
-| Project list: new, open, copy, delete to a list it can be put back from, start from an example | Blocks for conditions and effects (step 3) |
-| Map: pages and arrows, pan, zoom, drag pages, drag-to-connect, drag-to-create | Tables for items, counters and professions (step 3) |
-| Page panel: name, text, picture, choices, fight, ending, start page | Extra texts and arrival effects (step 3) |
-| Story settings: name, author, description, language, look, cover, hero numbers | ZIP and single-HTML export, ZIP import (step 4) |
-| Autosave, undo and redo that survive a reload, trash for pages, older versions | Test panel to set the bag and counters before play-testing |
-| Hints with jump-to-page; play-testing from the start or from a page | "Tidy up" automatic layout of the map |
-| Czech and English texts; one-tab-at-a-time lock | Backup reminder |
-
-Logic made elsewhere (for example in the sample adventures) is kept untouched and shown as a
-"has rules" mark, so opening and saving a story never loses it.
+| Project list: new, open, copy, delete to a list it can be put back from, start from an example | ZIP and single-HTML export, ZIP import (step 4) |
+| Map: pages and arrows, pan, zoom, drag pages, drag-to-connect, drag-to-create | Test panel to set the bag and counters before play-testing |
+| Page panel: name, text, picture, choices, fight, ending, start page, extra texts | "Tidy up" automatic layout of the map |
+| Blocks for the rules of a choice, arrival effects, fight outcomes, extra-text conditions and item use | Backup reminder |
+| Lists of items, counters, and the hero with professions (top bar: 🎒 🔢 🧙) | "New item…" directly from a block's drop-down list |
+| Story settings: name, author, description, language, look, cover | |
+| Autosave, undo and redo that survive a reload, trash for pages, older versions | |
+| Hints with jump-to-page; play-testing from the start or from a page | |
+| Czech and English texts, including the blocks; one-tab-at-a-time lock | |
 
 The rest of this section describes the design; where the built part differs, it says so.
 
@@ -368,9 +369,31 @@ Each block corresponds to one condition or effect of the format (the table in se
 
 - The story JSON is the single source of truth. Opening the block editor builds the blocks from
   the JSON, and every block change writes JSON straight back. Block positions are not stored.
-- Drop-down lists are filled from the story (items, pages, counters, choices) and include
-  "new…", so an author never types an id.
-- Blocks that refer to something deleted stay visible and are flagged as a hint.
+- Drop-down lists are filled from the story (items, pages, counters, choices), so an author
+  never types an id. Creating a new item from inside a list is planned; for now items are added
+  in the items list first.
+- Blocks that refer to something deleted stay visible, marked "deleted", and are reported as a
+  hint.
+
+How it is built:
+
+- A "◆" button opens the block editor wherever logic can go. The number on it shows how much is
+  already there. The editor is one full-screen dialog holding one fixed yellow root block that
+  the author fills in: a question slot, a slot for a stack of effects, or both for a choice.
+  Blocks left lying loose outside the root block are not part of the rule.
+- `rules/convert.ts` translates between the format and Blockly's saved-workspace data. It has
+  no dependency on Blockly, so it is tested in Node: every rule of the sample adventures must
+  survive the round trip unchanged.
+- `rules/blocks.ts` defines how each block looks and what the palette offers. One block type per
+  condition or effect (`cond_*`, `fx_*`).
+- Conditions or effects this editor does not know (from a newer version) become a grey
+  "cannot show" block that carries the original JSON along, so nothing is lost.
+- "a and b and c" is drawn as nested two-slot blocks and stored flat again. A comparison written
+  as "5 < gold" is shown as "gold > 5". Effects after "go to page" are dropped, since they could
+  never run.
+- "Only once" and the greyed-out explanation of a choice are ordinary form fields above its blocks.
+- Blockly's small picture files are served from `public/blockly-media/`, so nothing is fetched
+  from another website.
 
 ### Data and saving
 
@@ -441,9 +464,13 @@ src/editor/
   panel.ts         the page panel and its form helpers
   dialogs.ts       story settings, hints, trash, older versions, play-test
   images.ts        resize and compress
+  tables.ts        lists of items, counters, hero and professions
+  rules/convert.ts conditions and effects <-> block data (no Blockly needed; tested)
+  rules/blocks.ts  what each block looks like, and the palette
+  rules/dialog.ts  the block editor dialog; loads Blockly on first use
   i18n/            editor texts in Czech and English
   editor.css       the editor's own look
-  (planned)        blocks/ and export.ts
+  (planned)        export.ts
 src/shared/db.ts   IndexedDB: projects, pictures, snapshots
 ```
 
@@ -467,7 +494,6 @@ Ways an author shares a finished adventure:
 
 Remaining build order:
 
-3. Blocks for conditions and effects, with the item, counter and profession tables.
 4. Export and import: ZIP and single HTML.
 5. Polish: test panel, automatic map layout, backup reminder.
 
@@ -480,7 +506,9 @@ Known gaps in what is built:
   phone size. Neither has been tried on real phones, Safari, or Firefox. In the editor, dragging
   was exercised with simulated mouse events; touch dragging and pinch zoom are written but untested,
   and so are choosing, pasting and dropping pictures.
-- A story with items, counters or professions cannot be built in the editor yet, only kept.
+- In the block editor, loading rules, drop-down lists, changing a field and saving were checked.
+  Dragging blocks out of the palette is Blockly's own behaviour and was not driven by the checks.
+  The block editor has not been tried on a phone-sized screen.
 - The map does not draw an arrow for a link to a deleted page; it shows as a hint instead.
 - When an author changes a story, an older saved game is kept if its page still exists and
   refused otherwise. There is no finer migration.

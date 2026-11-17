@@ -757,3 +757,166 @@ textarea {
     white-space: nowrap;
   }
 }
+
+/* ---- Rules: buttons that open the block editor, and the editor itself ---------- */
+
+.rules-button {
+  justify-self: start;
+  min-height: 2.2rem;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.9rem;
+  color: #6d28d9;
+  border-color: #c9b8f5;
+}
+
+.rules-button.has-rules {
+  background: #f1e9ff;
+}
+
+.rules-count {
+  min-width: 1.3rem;
+  padding: 0 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.3rem;
+  text-align: center;
+  color: #ffffff;
+  background: #6d28d9;
+  border-radius: 99px;
+}
+
+.rules-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.rules-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.rules-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.rules-title {
+  display: grid;
+  min-width: 0;
+}
+
+.rules-extra {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: #f7f6f2;
+  border-bottom: 1px solid var(--line);
+}
+
+.rules-extra .field {
+  margin: 0;
+}
+
+.rules-blocks {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---- Lists of items, counters and professions ---------------------------------- */
+
+.dialog.wide {
+  width: min(44rem, calc(100vw - 1.5rem));
+}
+
+.cards {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f7f6f2;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.cards .card {
+  margin-bottom: 0;
+}
+
+.card .field,
+.card .picture {
+  margin-bottom: 0;
+}
+
+.card h3,
+.card h4 {
+  margin: 0.3rem 0 0;
+}
+
+h4 {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.card-head {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.card-head input {
+  font-weight: 700;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2rem;
+  cursor: pointer;
+}
+
+.check input {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: none;
+}
+
+.checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 1.2rem;
+}
+
+.grant {
+  display: grid;
+  grid-template-columns: 4.5rem auto 1fr auto;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.choose {
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}

@@ -1,4 +1,6 @@
 type Child = Node | string | number | null | undefined | false;
+/** Children may be given in lists, and lists of lists (e.g. the result of a map). */
+type Children = Child | Children[];
 type PropValue = string | number | boolean | undefined | ((event: Event) => void);
 
 /**
@@ -8,7 +10,7 @@ type PropValue = string | number | boolean | undefined | ((event: Event) => void
 export function h<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   props?: Record<string, PropValue> | null,
-  ...children: (Child | Child[])[]
+  ...children: Children[]
 ): HTMLElementTagNameMap[K] {
   const el = document.createElement(tag);
   for (const [key, value] of Object.entries(props ?? {})) {
@@ -17,7 +19,7 @@ export function h<K extends keyof HTMLElementTagNameMap>(
     else if (key === 'class') el.className = String(value);
     else el.setAttribute(key, value === true ? '' : String(value));
   }
-  for (const child of children.flat()) {
+  for (const child of (children as unknown[]).flat(Infinity) as Child[]) {
     if (child !== null && child !== undefined && child !== false) el.append(child instanceof Node ? child : String(child));
   }
   return el;

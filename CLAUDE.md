@@ -21,13 +21,17 @@ Run tests and the type-check after changes. UI changes also need a look in the b
 - `src/shared/engine/` — game rules; no DOM, plain-JSON state
 - `src/shared/` — also `zip.ts`, `db.ts` (editor projects in IndexedDB), `dom.ts`, `i18n.ts`
 - `src/player/` — player screens, loading, saving, `styles/` (one `theme-*.css` per look)
-- `src/editor/` — editor: `workspace.ts`, `map.ts`, `panel.ts`, `dialogs.ts`, `store.ts`, `ops.ts`
+- `src/editor/` — editor: `workspace.ts`, `map.ts`, `panel.ts`, `dialogs.ts`, `tables.ts`, `store.ts`, `ops.ts`
+- `src/editor/rules/` — blocks: `convert.ts` (format ↔ block data, no Blockly), `blocks.ts`, `dialog.ts`
 - `public/adventures/` — sample adventures, listed in `index.json`
 
 ## Rules of the codebase
 
 - TypeScript, vanilla DOM (`h()` in `src/shared/dom.ts`), no UI framework. Do not add runtime
-  dependencies without asking; Blockly for the editor's blocks is the only one planned.
+  dependencies without asking. Blockly is the only one; it is editor-only and must stay lazily
+  imported (`rules/dialog.ts`). The player has none.
+- A new condition or effect needs: the type in `format/types.ts`, the engine, a block in
+  `rules/blocks.ts`, both directions in `rules/convert.ts`, and block texts in both languages.
 - Tests run TypeScript directly in Node: imports need the `.ts` extension, and only erasable
   syntax is allowed (no enums, no constructor parameter properties).
 - The engine must stay free of DOM and browser APIs. The player and the editor's play-test

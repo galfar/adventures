@@ -1,8 +1,10 @@
 import type { EditorDoc } from '../shared/db.ts';
 import { h } from '../shared/dom.ts';
-import type { Action, Page, PageId } from '../shared/format/types.ts';
+import type { Action, ConditionalText, Page, PageId } from '../shared/format/types.ts';
 import type { EditorContext } from './context.ts';
 import { addAction, addPage, deletePage, findPage, moveAction, spotNear } from './ops.ts';
+import type { Rule } from './rules/convert.ts';
+import { openRules, type RuleTarget } from './rules/dialog.ts';
 import type { ChangeOptions } from './store.ts';
 
 /**
@@ -62,6 +64,48 @@ export function select(options: { value: string; label: string }[], current: str
   );
   element.value = current;
   return element;
+}
+
+export function checkbox(label: string, checked: boolean, onChange: (checked: boolean) => void): HTMLElement {
+  const box = h('input', { type: 'checkbox', onchange: () => onChange(box.checked) });
+  box.checked = checked;
+  return h('label', { class: 'check' }, box, h('span', null, label));
+}
+
+/** How many conditions and effects something has, for the number on its rules button. */
+export function ruleSize(rule: Rule & { once?: boolean; lockedHint?: string }): number {
+  return (rule.when ? 1 : 0) + (rule.effects?.length ?? 0) + (rule.once ? 1 : 0) + (rule.lockedHint ? 1 : 0);
+}
+
+/** Stores a rule on something that has `when` and `effects`, removing what became empty. */
+export function setRule(owner: Rule, rule: Rule): void {
+  if (rule.when) owner.when = rule.when;
+  else delete owner.when;
+  if (rule.effects) owner.effects = rule.effects;
+  else delete owner.effects;
+}
+
+/** A button that opens the block editor; it shows how much is in there already. */
+export function rulesButton(ctx: EditorContext, text: string, size: number, target: () => RuleTarget, onClose?: () => void): HTMLElement {
+  return h(
+    'button',
+    {
+      class: size > 0 ? 'action rules-button has-rules' : 'action rules-button',
+      type: 'button',
+      onclick: async () => {
+        await openRules(ctx, target());
+        // The form behind the block editor shows counts that may have changed.
+        if (onClose) onClose();
+        else ctx.select(ctx.selected);
+      },
+    },
+    `◆ ${text}`,
+    size > 0 && h('span', { class: 'rules-count' }, size),
+  );
+}
+
+function findAction(doc: EditorDoc, pageId: PageId, actionId: string): Action | undefined {
+  return findPage(doc.story, pageId)?.actions.find((action) => action.id === actionId);
 }
 
 export function field(label: string, ...controls: Child[]): HTMLElement {
@@ -147,7 +191,6 @@ export function buildPanel(ctx: EditorContext): Child[] {
         const target = p.actions.find((a) => a.id === action.id);
         if (target) mutate(target);
       }, options);
-    const hasRules = !!(action.when || action.effects?.length || action.once || action.lockedHint);
     const toolButton = (text: string, label: string, disabled: boolean, run: () => void) =>
       h('button', { class: 'tool', type: 'button', title: label, 'aria-label': label, disabled, onclick: run }, text);
     return h(
@@ -170,7 +213,33 @@ export function buildPanel(ctx: EditorContext): Child[] {
             else a.target = target;
           }),
         ),
-        hasRules && h('span', { class: 'chip', title: t('hasRulesTitle') }, `◆ ${t('hasRules')}`),
+        rulesButton(ctx, t('rules'), ruleSize(action), () => ({
+          title: `${t('choices')}: ${action.label || '?'}`,
+          kind: 'choice',
+          mergeKey: `rules:${action.id}`,
+          read: (doc) => findAction(doc, id, action.id),
+          write: (doc, rule) => {
+            const a = findAction(doc, id, action.id);
+            if (a) setRule(a, rule);
+          },
+          extra: [
+            checkbox(t('onceLabel'), !!action.once, (on) =>
+              editAction((a) => {
+                if (on) a.once = true;
+                else delete a.once;
+              }, { quiet: true }),
+            ),
+            field(
+              t('lockedHintLabel'),
+              textInput(action.lockedHint ?? '', { placeholder: t('lockedHintPlaceholder') }, (value) =>
+                editAction((a) => {
+                  if (value) a.lockedHint = value;
+                  else delete a.lockedHint;
+                }, { merge: `locked:${action.id}`, quiet: true }),
+              ),
+            ),
+          ],
+        })),
       ),
       h(
         'div',
@@ -224,6 +293,33 @@ export function buildPanel(ctx: EditorContext): Child[] {
             else p.combat!.flee = { ...p.combat!.flee, target };
           }),
         ),
+        // What else happens after the fight (pick-ups, losing gold...), built from blocks.
+        h(
+          'div',
+          { class: 'button-row' },
+          (['onWin', 'onLose', 'flee'] as const)
+            .filter((part) => part !== 'flee' || combat.flee)
+            .map((part) =>
+              rulesButton(ctx, t(part === 'onWin' ? 'winAlso' : part === 'onLose' ? 'loseAlso' : 'fleeAlso'), combat[part]?.effects?.length ?? 0, () => ({
+                title: `${t('fight')}: ${t(part === 'onWin' ? 'winAlso' : part === 'onLose' ? 'loseAlso' : 'fleeAlso')}`,
+                kind: 'effects',
+                mergeKey: `rules:${id}:${part}`,
+                read: (doc) => {
+                  const c = findPage(doc.story, id)?.combat;
+                  return c ? { effects: c[part]?.effects } : undefined;
+                },
+                write: (doc, rule) => {
+                  const c = findPage(doc.story, id)?.combat;
+                  if (!c) return;
+                  if (part === 'flee') {
+                    if (c.flee) c.flee = { target: c.flee.target, ...(rule.effects ? { effects: rule.effects } : {}) };
+                  } else {
+                    c[part] = { ...(c[part]?.target !== undefined ? { target: c[part]!.target } : {}), ...(rule.effects ? { effects: rule.effects } : {}) };
+                  }
+                },
+              })),
+            ),
+        ),
         h('button', { class: 'action', type: 'button', onclick: () => edit((p) => void delete p.combat) }, t('removeFight')),
       ]
     : [
@@ -241,10 +337,68 @@ export function buildPanel(ctx: EditorContext): Child[] {
         ),
       ];
 
-  // Things made outside this editor that cannot be edited here yet must stay visible.
-  const later = [page.extraTexts?.length && t('extraTexts'), (page.onFirstVisit?.length || page.onEveryVisit?.length) && t('arrivalEffects')].filter(
-    (name): name is string => !!name,
+  const arrival = (['onFirstVisit', 'onEveryVisit'] as const).map((part) =>
+    rulesButton(ctx, t(part === 'onFirstVisit' ? 'firstVisit' : 'everyVisit'), page[part]?.length ?? 0, () => ({
+      title: `${t('arrival')}: ${t(part === 'onFirstVisit' ? 'firstVisit' : 'everyVisit')}`,
+      kind: 'effects',
+      mergeKey: `rules:${id}:${part}`,
+      read: (doc) => {
+        const p = findPage(doc.story, id);
+        return p ? { effects: p[part] } : undefined;
+      },
+      write: (doc, rule) => {
+        const p = findPage(doc.story, id);
+        if (!p) return;
+        if (rule.effects) p[part] = rule.effects;
+        else delete p[part];
+      },
+    })),
   );
+
+  const extraText = (extra: ConditionalText, index: number) =>
+    h(
+      'div',
+      { class: 'choice' },
+      h(
+        'div',
+        { class: 'choice-main' },
+        textArea(extra.text, { placeholder: t('extraTextPlaceholder'), 'data-key': `extra-text:${index}`, rows: '2' }, (value) =>
+          edit((p) => {
+            const target = p.extraTexts?.[index];
+            if (target) target.text = value;
+          }, typing(`extra:${index}`)),
+        ),
+        rulesButton(ctx, t('showIf'), 1, () => ({
+          title: t('showIf'),
+          kind: 'condition',
+          mergeKey: `rules:${id}:extra:${index}`,
+          read: (doc) => {
+            const target = findPage(doc.story, id)?.extraTexts?.[index];
+            return target ? { when: target.when } : undefined;
+          },
+          write: (doc, rule) => {
+            const target = findPage(doc.story, id)?.extraTexts?.[index];
+            // An extra text always needs a condition; an empty one is "always".
+            if (target) target.when = rule.when ?? { type: 'and', all: [] };
+          },
+        })),
+      ),
+      h(
+        'div',
+        { class: 'choice-tools' },
+        h(
+          'button',
+          {
+            class: 'tool',
+            type: 'button',
+            title: t('deleteExtraText'),
+            'aria-label': t('deleteExtraText'),
+            onclick: () => edit((p) => void p.extraTexts?.splice(index, 1)),
+          },
+          '🗑',
+        ),
+      ),
+    );
   const isStart = story.startPage === id;
   const onlyPage = story.pages.length <= 1;
 
@@ -295,6 +449,27 @@ export function buildPanel(ctx: EditorContext): Child[] {
       ),
     ),
     h('section', { class: 'section' }, h('h3', null, t('fight')), fight),
+    h('section', { class: 'section' }, h('h3', null, t('arrival')), h('p', { class: 'field-note' }, t('arrivalHelp')), h('div', { class: 'button-row' }, arrival)),
+    h(
+      'section',
+      { class: 'section' },
+      h('h3', null, t('extraTextsTitle')),
+      h('p', { class: 'field-note' }, t('extraTextsHelp')),
+      (page.extraTexts ?? []).map(extraText),
+      h(
+        'button',
+        {
+          class: 'action',
+          type: 'button',
+          onclick: () => {
+            const index = page.extraTexts?.length ?? 0;
+            edit((p) => void (p.extraTexts ??= []).push({ when: { type: 'and', all: [] }, text: '' }));
+            ctx.focusField(`extra-text:${index}`);
+          },
+        },
+        `＋ ${t('addExtraText')}`,
+      ),
+    ),
     h(
       'section',
       { class: 'section' },
@@ -319,7 +494,6 @@ export function buildPanel(ctx: EditorContext): Child[] {
       isStart
         ? h('p', { class: 'field-note' }, `🚩 ${t('isStart')}`)
         : h('button', { class: 'action', type: 'button', onclick: () => ctx.change((doc) => void (doc.story.startPage = id)) }, `🚩 ${t('makeStart')}`),
-      later.length > 0 && h('p', { class: 'field-note' }, `◆ ${t('extraNote', { what: later.join(', ') })}`),
     ),
     h(
       'section',

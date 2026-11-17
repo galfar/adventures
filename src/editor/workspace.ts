@@ -10,6 +10,7 @@ import { MapView } from './map.ts';
 import { assetRefs, ensurePositions, findPage, newId, pageLabel } from './ops.ts';
 import { buildPanel, growToFit } from './panel.ts';
 import { Store, type ChangeOptions } from './store.ts';
+import { openCounters, openHero, openItems } from './tables.ts';
 
 /** Changes are written to storage this long after the last one. */
 const SAVE_DELAY_MS = 400;
@@ -162,6 +163,9 @@ export class Workspace implements EditorContext {
         this.bar.redo,
         this.bar.status,
         h('span', { class: 'bar-space' }),
+        iconButton('🎒', t('items'), () => openItems(this)),
+        iconButton('🔢', t('counters'), () => openCounters(this)),
+        iconButton('🧙', t('heroTitle'), () => openHero(this)),
         this.bar.hints,
         iconButton('🗑', t('trash'), () => openTrash(this)),
         iconButton('🕘', t('versions'), () => void openVersions(this)),

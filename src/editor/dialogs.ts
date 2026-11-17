@@ -3,7 +3,7 @@ import { h, openDialog } from '../shared/dom.ts';
 import type { PageId } from '../shared/format/types.ts';
 import type { EditorContext } from './context.ts';
 import { restorePage } from './ops.ts';
-import { field, growToFit, numberInput, pictureField, select, textArea, textInput } from './panel.ts';
+import { field, growToFit, pictureField, select, textArea, textInput } from './panel.ts';
 
 /** The editor's dialogs: story settings, hints, trash, older versions, and play-testing. */
 
@@ -74,25 +74,6 @@ export function openSettings(ctx: EditorContext): void {
           );
           fill();
         }),
-      ),
-      h(
-        'section',
-        { class: 'section' },
-        h('h3', null, t('heroStats')),
-        story.professions.length > 0
-          ? h('p', { class: 'field-note' }, t('professionsNote'))
-          : h(
-              'div',
-              { class: 'number-row' },
-              (['hp', 'attack', 'defense'] as const).map((stat) =>
-                field(
-                  `${{ hp: '❤️', attack: '⚔️', defense: '🛡️' }[stat]} ${t(stat)}`,
-                  numberInput(story.hero.stats[stat], `hero-${stat}`, stat === 'hp' ? 1 : 0, 999, (value) =>
-                    ctx.change((doc) => void (doc.story.hero.stats[stat] = value), typing(`hero-${stat}`)),
-                  ),
-                ),
-              ),
-            ),
       ),
       closeButton(ctx, dialog, t('done')),
     );
