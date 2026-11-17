@@ -231,4 +231,15 @@ export const cs: Messages = {
   bChoiceDo: 'Když ji hráč vybere',
   bEffectsDo: 'Udělej tohle',
   bConditionIf: 'Ukázat, jen když',
+
+  // Saving as a file and opening a file
+  export: 'Uložit jako soubor',
+  exportHtml: 'Jeden soubor na hraní',
+  exportHtmlText: 'Jediný soubor .html s celým dobrodružstvím. Pošli ho komukoli; otevře se dvojklikem v prohlížeči.',
+  exportZip: 'Soubor s dobrodružstvím (.zip)',
+  exportZipText: 'Záloha tvojí práce. Jde znovu otevřít v tomto editoru, i na jiném počítači, a také v přehrávači.',
+  exportHints: 'Příběh má ještě rady ({n}). Uložit ho jde i tak.',
+  exportFailed: 'Soubor se nepodařilo vytvořit.',
+  importZip: 'Otevřít soubor s dobrodružstvím (.zip)',
+  importFailed: 'Tenhle soubor není dobrodružství, které jde otevřít.',
 };

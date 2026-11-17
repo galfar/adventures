@@ -1,10 +1,11 @@
 # Adventures: architecture of the player and the editor
 
-Status on 2026-11-17: **steps 1 to 3 are built.** Step 1 is the story format, game engine,
+Status on 2026-11-17: **steps 1 to 4 are built.** Step 1 is the story format, game engine,
 player, two sample adventures and three visual styles. Step 2 is the editor's project list,
 page map, page panel, autosave, undo, trash, older versions, hints and play-testing. Step 3 is
-blocks for conditions and effects, and the lists of items, counters and professions. Export
-and import are **designed here but not built yet**. Each section says which state it describes.
+blocks for conditions and effects, and the lists of items, counters and professions. Step 4 is
+saving an adventure as one HTML file or a ZIP, and opening a ZIP. What remains is polish
+(section 9). Each section says which state it describes.
 
 ## 1. The big picture
 
@@ -15,7 +16,7 @@ that share one data format:
 |---|---|---|
 | **Story format** | One `story.json` plus picture files. Packaged as a folder, a ZIP, or embedded in a single HTML file. | built |
 | **Player** | Web app that plays a story. No runtime dependencies, works on phones, saves progress in the browser. | built |
-| **Editor** | Web app where kids build a story on a map of pages, with blocks for conditions and effects. | partly built (section 7) |
+| **Editor** | Web app where kids build a story on a map of pages, with blocks for conditions and effects. | built; polish remains (section 7) |
 
 Everything is static files. There is no server, no accounts, and no database outside the browser.
 
@@ -23,7 +24,7 @@ Everything is static files. There is no server, no accounts, and no database out
             ┌──────────── src/shared ────────────┐
             │  format/   story types, validation │
             │  engine/   game rules (no screen)  │
-            │  zip.ts    ZIP reading (+ writing) │
+            │  zip.ts    ZIP reading and writing │
             └───────┬───────────────────┬────────┘
                     │                   │
           ┌─────────▼────────┐  ┌───────▼─────────────────┐
@@ -49,7 +50,7 @@ src/shared/engine/game.ts       Game class: commands and view
 src/shared/engine/conditions.ts condition evaluation, item bonuses
 src/shared/engine/rules.ts      fight formula, seeded random numbers
 src/shared/engine/state.ts      saved-game shape, events and notices
-src/shared/zip.ts               ZIP reader on the browser's own decompression
+src/shared/zip.ts               ZIP reader and writer on the browser's own compression
 src/shared/db.ts                editor projects in IndexedDB (the player reads them to play-test)
 src/shared/dom.ts, i18n.ts      small helpers shared by both apps
 src/player/main.ts              start-up: embedded story, ?story= address, or library
@@ -60,7 +61,9 @@ src/player/i18n/                en.ts, cs.ts, and the lookup
 src/player/styles/              base.css + one theme-*.css per visual style
 src/editor/                     the editor (layout in section 7)
 editor.html                     entry page of the editor
+scripts/build-template.mjs      builds the single-file player used by the HTML export
 public/adventures/              bundled sample adventures and index.json
+public/blockly-media/           Blockly's small picture files
 tests/                          engine, ZIP and editor tests (Node's built-in test runner)
 ```
 
@@ -75,7 +78,8 @@ is fetched only when the block editor is first opened.
 | Command | What it does |
 |---|---|
 | `npm run dev` | player at http://localhost:5173, editor at http://localhost:5173/editor.html |
-| `npm test` | engine, ZIP, editor and block-conversion tests (34 tests) |
+| `npm test` | engine, ZIP, editor and block-conversion tests (35 tests) |
+| `npm run template` | rebuild `public/player-template.html` (also run by `dev` and `build`) |
 | `npm run build` | type-check, then build the static site into `dist/` |
 
 ## 2. Story format (built)
@@ -134,9 +138,9 @@ Rules that keep the format safe to grow:
 | ZIP | the same files, optionally inside one folder | the editor's export and backup file; opened by the player site |
 | Single HTML | the player with the story and pictures embedded | sending one file that opens by double-click |
 
-The player already loads all three. The single HTML embeds the data as
+The player loads all three, and the editor produces the ZIP and the HTML. The single HTML embeds
+the data as
 `<script type="application/json" id="adventure-data">{"story": …, "assets": {"images/a.png": "data:image/png;base64,…"}}</script>`.
-Producing the ZIP and the HTML is the editor's job (step 4).
 
 ## 3. Game engine (built)
 
@@ -301,7 +305,7 @@ Nothing plays sound yet. The design leaves room for it without changing what exi
 
 | Built (steps 2 and 3) | Not built yet |
 |---|---|
-| Project list: new, open, copy, delete to a list it can be put back from, start from an example | ZIP and single-HTML export, ZIP import (step 4) |
+| Project list: new, open, copy, delete to a list it can be put back from, start from an example | "Save as a file": one HTML file or a ZIP; "open an adventure file" on the project list |
 | Map: pages and arrows, pan, zoom, drag pages, drag-to-connect, drag-to-create | Test panel to set the bag and counters before play-testing |
 | Page panel: name, text, picture, choices, fight, ending, start page, extra texts | "Tidy up" automatic layout of the map |
 | Blocks for the rules of a choice, arrival effects, fight outcomes, extra-text conditions and item use | Backup reminder |
@@ -443,12 +447,21 @@ planned: a small panel to set the bag, counters and stats before a test.
 
 ### Export and import
 
-- **ZIP**: `story.json` and the pictures. This is both the backup and what the player site
-  opens. Writing ZIPs can use the browser's own compression, mirroring the existing reader, so
-  no ZIP library is needed.
-- **Single HTML**: the built player (one script and one stylesheet, inlined) with the story and
-  pictures embedded. The player side of this already works.
-- **Import**: a ZIP always becomes a new project. It never overwrites an existing one.
+Built. "Save as a file" (⬇ in the top bar) offers two files; both can be saved while the story
+still has hints.
+
+- **ZIP**: `story.json` and the pictures the story uses. This is the backup, the file another
+  author opens in their editor, and what the player site opens. `writeZip` in
+  `src/shared/zip.ts` uses the browser's own compression, so there is no ZIP library. Text is
+  compressed; pictures are stored as they are.
+- **Single HTML**: `scripts/build-template.mjs` builds the player into one file,
+  `public/player-template.html` (about 40 kB, script and styles inline). The export copies it
+  and puts in the story and the pictures as data. The template is rebuilt by `npm run dev` and
+  `npm run build` and is not kept in git. Every "<" in the embedded data is written as
+  `\u003c`, so story text can never close the script element.
+- **Import**: "Open an adventure file (.zip)" on the project list. A ZIP always becomes a new
+  project with a new story id; it never replaces an existing one. Only picture files the story
+  refers to are taken from the archive.
 
 ### Code structure
 
@@ -469,8 +482,8 @@ src/editor/
   rules/blocks.ts  what each block looks like, and the palette
   rules/dialog.ts  the block editor dialog; loads Blockly on first use
   i18n/            editor texts in Czech and English
+  export.ts        ZIP and single-HTML export, ZIP import
   editor.css       the editor's own look
-  (planned)        export.ts
 src/shared/db.ts   IndexedDB: projects, pictures, snapshots
 ```
 
@@ -492,16 +505,20 @@ Ways an author shares a finished adventure:
 
 ## 9. Next steps and open points
 
-Remaining build order:
+All four planned steps are built. Remaining polish, in rough order of value:
 
-4. Export and import: ZIP and single HTML.
-5. Polish: test panel, automatic map layout, backup reminder.
+- a backup reminder in the editor (browser storage can be cleared);
+- a test panel to set the bag and counters before play-testing;
+- "new item…" directly from a block's drop-down list;
+- automatic tidy-up of the map;
+- sound and music (section 6).
 
 Known gaps in what is built:
 
-- The single-HTML and ZIP *exports* do not exist yet; only loading them does. Loading a ZIP was
-  checked with an archive made by Windows; loading an embedded story has not been exercised yet
-  because nothing produces one.
+- Exports were checked like this: the HTML file was built in the browser and played inside a
+  frame, with pictures; a ZIP was built and opened again as an identical project; a ZIP from the
+  same writer was unpacked by Windows' own unzip to identical files. The download step itself,
+  and opening an exported HTML file from disk by double-click, were not exercised.
 - The player and the editor were checked in the desktop app's browser (Chromium) at desktop and
   phone size. Neither has been tried on real phones, Safari, or Firefox. In the editor, dragging
   was exercised with simulated mouse events; touch dragging and pinch zoom are written but untested,

@@ -1,3 +1,5 @@
 node_modules/
 dist/
+# Made by scripts/build-template.mjs
+public/player-template.html
 *.log

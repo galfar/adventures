@@ -12,6 +12,9 @@ Keep that document up to date when behaviour or structure changes.
 - `npm test` — Node's built-in test runner over `tests/**/*.test.ts`
 - `npm run typecheck` — `tsc --noEmit`
 - `npm run build` — type-check, then build both pages into `dist/`
+- `npm run template` — rebuild `public/player-template.html`, the single-file player used by
+  the HTML export (`dev` and `build` run it; it is git-ignored). Rerun it after changing the
+  player while the dev server is running.
 
 Run tests and the type-check after changes. UI changes also need a look in the browser.
 
@@ -21,7 +24,7 @@ Run tests and the type-check after changes. UI changes also need a look in the b
 - `src/shared/engine/` — game rules; no DOM, plain-JSON state
 - `src/shared/` — also `zip.ts`, `db.ts` (editor projects in IndexedDB), `dom.ts`, `i18n.ts`
 - `src/player/` — player screens, loading, saving, `styles/` (one `theme-*.css` per look)
-- `src/editor/` — editor: `workspace.ts`, `map.ts`, `panel.ts`, `dialogs.ts`, `tables.ts`, `store.ts`, `ops.ts`
+- `src/editor/` — editor: `workspace.ts`, `map.ts`, `panel.ts`, `dialogs.ts`, `tables.ts`, `export.ts`, `store.ts`, `ops.ts`
 - `src/editor/rules/` — blocks: `convert.ts` (format ↔ block data, no Blockly), `blocks.ts`, `dialog.ts`
 - `public/adventures/` — sample adventures, listed in `index.json`
 

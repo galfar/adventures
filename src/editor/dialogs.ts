@@ -2,6 +2,7 @@ import { listSnapshots } from '../shared/db.ts';
 import { h, openDialog } from '../shared/dom.ts';
 import type { PageId } from '../shared/format/types.ts';
 import type { EditorContext } from './context.ts';
+import { buildHtml, buildZip, download, fileName, loadTemplate, usedPictures } from './export.ts';
 import { restorePage } from './ops.ts';
 import { field, growToFit, pictureField, select, textArea, textInput } from './panel.ts';
 
@@ -197,6 +198,36 @@ export async function openVersions(ctx: EditorContext): Promise<void> {
     ),
     closeButton(ctx, dialog),
   ]);
+}
+
+/** Saving the adventure as a file: one HTML file for players, or a ZIP for backup and sharing. */
+export function openExport(ctx: EditorContext): void {
+  const { t } = ctx;
+  openDialog('dialog', (dialog) => {
+    const status = h('p', { class: 'field-error', role: 'alert' });
+    const save = async (kind: 'html' | 'zip') => {
+      status.textContent = '';
+      try {
+        await ctx.flush();
+        const story = ctx.story;
+        const pictures = await usedPictures(ctx.projectId, story);
+        const blob = kind === 'zip' ? await buildZip(story, pictures) : await buildHtml(story, pictures, await loadTemplate());
+        download(blob, fileName(story.title, kind));
+      } catch (error) {
+        console.error(error);
+        status.textContent = t('exportFailed');
+      }
+    };
+    const option = (icon: string, title: string, text: string, kind: 'html' | 'zip') =>
+      h('button', { class: 'action export-option', onclick: () => void save(kind) }, h('span', { class: 'export-icon' }, icon), h('span', null, h('strong', null, title), h('small', null, text)));
+    return [
+      h('h2', null, `⬇ ${t('export')}`),
+      ctx.problems.length > 0 && h('p', { class: 'field-note' }, `⚠️ ${t('exportHints', { n: ctx.problems.length })}`),
+      h('div', { class: 'list' }, option('🌐', t('exportHtml'), t('exportHtmlText'), 'html'), option('📦', t('exportZip'), t('exportZipText'), 'zip')),
+      status,
+      closeButton(ctx, dialog),
+    ];
+  });
 }
 
 /** Plays the story in the real player, next to the editor. Test games are not saved. */

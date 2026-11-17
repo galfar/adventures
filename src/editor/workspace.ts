@@ -3,7 +3,7 @@ import { h } from '../shared/dom.ts';
 import type { Page, PageId, Story } from '../shared/format/types.ts';
 import { validateStory, type Problem } from '../shared/format/validate.ts';
 import type { EditorContext } from './context.ts';
-import { openHints, openPreview, openSettings, openTrash, openVersions } from './dialogs.ts';
+import { openExport, openHints, openPreview, openSettings, openTrash, openVersions } from './dialogs.ts';
 import type { Translate } from './i18n/index.ts';
 import { imageFrom, prepareImage } from './images.ts';
 import { MapView } from './map.ts';
@@ -170,6 +170,7 @@ export class Workspace implements EditorContext {
         iconButton('🗑', t('trash'), () => openTrash(this)),
         iconButton('🕘', t('versions'), () => void openVersions(this)),
         iconButton('⚙️', t('settings'), () => openSettings(this)),
+        iconButton('⬇', t('export'), () => openExport(this)),
         h('button', { class: 'action primary bar-play', onclick: () => void openPreview(this) }, `▶ ${t('play')}`),
       ),
       h('div', { class: 'workspace' }, this.map.element, this.panel),

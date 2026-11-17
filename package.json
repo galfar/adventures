@@ -5,8 +5,9 @@
   "description": "Gamebook-style adventure framework: story format, engine, player (and later editor).",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "template": "node scripts/build-template.mjs",
+    "dev": "npm run template && vite",
+    "build": "tsc --noEmit && npm run template && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"tests/**/*.test.ts\""

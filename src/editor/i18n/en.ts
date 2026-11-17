@@ -237,6 +237,17 @@ export const en = {
   bChoiceDo: 'When it is picked',
   bEffectsDo: 'Do this',
   bConditionIf: 'Show this only if',
+
+  // Saving as a file and opening a file
+  export: 'Save as a file',
+  exportHtml: 'One file to play',
+  exportHtmlText: 'A single .html file with the whole adventure inside. Send it to anyone; it opens in a browser by double-click.',
+  exportZip: 'Adventure file (.zip)',
+  exportZipText: 'A backup of your work. It can be opened again in this editor, on another computer too, and in the player.',
+  exportHints: 'The story still has hints ({n}). It can be saved anyway.',
+  exportFailed: 'The file could not be made.',
+  importZip: 'Open an adventure file (.zip)',
+  importFailed: 'This file is not an adventure that can be opened.',
 };
 
 export type Messages = typeof en;

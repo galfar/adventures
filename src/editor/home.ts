@@ -2,6 +2,7 @@ import { listAssets, listProjects, removeProject, saveAsset, saveProject, type P
 import { confirmDialog, h } from '../shared/dom.ts';
 import type { Story } from '../shared/format/types.ts';
 import { normalizeStory } from '../shared/format/validate.ts';
+import { importZip } from './export.ts';
 import { setEditorLanguage, type Translate } from './i18n/index.ts';
 import { assetRefs, copyStory, ensurePositions, newId, newStory } from './ops.ts';
 
@@ -54,6 +55,21 @@ export async function showHome(root: HTMLElement, t: Translate, language: string
     refresh();
   };
   const error = h('p', { class: 'field-error', role: 'alert' });
+  const fileInput = h('input', {
+    class: 'file-input',
+    type: 'file',
+    accept: '.zip,application/zip',
+    tabindex: -1,
+    onchange: async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      try {
+        openProject(await importZip(await file.arrayBuffer()));
+      } catch {
+        error.textContent = t('importFailed');
+      }
+    },
+  });
 
   const card = (project: ProjectRecord) =>
     h(
@@ -149,6 +165,9 @@ export async function showHome(root: HTMLElement, t: Translate, language: string
         },
         `＋ ${t('newProject')}`,
       ),
+      ' ',
+      h('button', { class: 'action big', onclick: () => fileInput.click() }, `📦 ${t('importZip')}`),
+      fileInput,
       h('ul', { class: 'projects' }, active.map(card)),
       samples.length > 0 && h('h2', null, t('samples')),
       h(

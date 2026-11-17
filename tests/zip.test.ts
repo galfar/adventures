@@ -57,3 +57,29 @@ test('reads stored and deflated files, with Czech text and Windows paths', async
 test('refuses data that is not a ZIP archive', async () => {
   await assert.rejects(readZip(new TextEncoder().encode('this is not a zip file at all').buffer as ArrayBuffer));
 });
+
+test('a written archive reads back the same, and unpacking and checksum by Node agree', async () => {
+  const { writeZip } = await import('../src/shared/zip.ts');
+  const { inflateRawSync, crc32 } = await import('node:zlib');
+  const text = new TextEncoder().encode(JSON.stringify({ title: 'Ztracená stanice', text: 'žluťoučký kůň '.repeat(80) }));
+  const picture = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3, 4, 5]);
+  const zip = await writeZip([
+    { name: 'story.json', data: text },
+    { name: 'images/obrázek.png', data: picture },
+  ]);
+  assert.ok(zip.length < text.length, 'the text was compressed');
+
+  const files = await readZip(zip.buffer);
+  assert.deepEqual([...files.keys()], ['story.json', 'images/obrázek.png']);
+  assert.deepEqual(files.get('story.json'), text);
+  assert.deepEqual(files.get('images/obrázek.png'), picture);
+
+  // Check the raw bytes independently of our own reader: the first file's header.
+  const view = new DataView(zip.buffer);
+  assert.equal(view.getUint32(0, true), 0x04034b50);
+  assert.equal(view.getUint16(8, true), 8, 'deflate');
+  assert.equal(view.getUint32(14, true), crc32(text), 'checksum matches Node\'s');
+  const packedSize = view.getUint32(18, true);
+  const start = 30 + view.getUint16(26, true);
+  assert.deepEqual(new Uint8Array(inflateRawSync(zip.subarray(start, start + packedSize))), text);
+});
