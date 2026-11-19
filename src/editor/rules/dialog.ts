@@ -3,6 +3,7 @@ import { h } from '../../shared/dom.ts';
 import type { EditorContext } from '../context.ts';
 import { defineBlocks, setLists, toolbox, type Lists, type Option } from './blocks.ts';
 import { ruleRefs, ruleToWorkspace, workspaceToRule, type Rule, type RuleKind, type WorkspaceState } from './convert.ts';
+import { ruleToText, type TextNames } from './text.ts';
 
 /**
  * The block editor: a full-screen dialog with one Blockly workspace for one rule
@@ -72,6 +73,81 @@ function buildLists(ctx: EditorContext, rule: Rule): Lists {
   };
 }
 
+const TEXT_VIEW_KEY = 'adventures.editor.rulesText';
+
+/** Whether the text view is open. Remembered, so authors who like it keep it. */
+function textViewOpen(): boolean {
+  try {
+    return localStorage.getItem(TEXT_VIEW_KEY) === 'open';
+  } catch {
+    return false;
+  }
+}
+
+function setTextViewOpen(open: boolean): void {
+  try {
+    localStorage.setItem(TEXT_VIEW_KEY, open ? 'open' : 'closed');
+  } catch {
+    // The choice just will not be remembered.
+  }
+}
+
+/** The side panel showing the rule as read-only text (see `text.ts`). */
+function buildTextPane(ctx: EditorContext, kind: RuleKind): { pane: HTMLElement; show(rule: Rule): void } {
+  const { t } = ctx;
+  const story = ctx.story;
+  const find = <T extends { id: string }>(list: T[], name: (thing: T) => string) => (id: string) => {
+    const thing = list.find((entry) => entry.id === id);
+    return thing ? name(thing) : undefined;
+  };
+  const names: TextNames = {
+    item: find(story.items, (item) => item.name || t('unnamed')),
+    counter: find(story.counters, (counter) => counter.name || t('unnamed')),
+    profession: find(story.professions, (profession) => profession.name || t('unnamed')),
+    page: find(story.pages, (page) => ctx.label(page)),
+    action: (id) => {
+      for (const page of story.pages) {
+        const action = page.actions.find((entry) => entry.id === id);
+        if (action) return `${ctx.label(page)}: ${action.label || '?'}`;
+      }
+      return undefined;
+    },
+  };
+  const code = h('pre', { class: 'rules-text-code' });
+  let text = '';
+  const copy = h(
+    'button',
+    {
+      class: 'action',
+      onclick: async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          copy.textContent = t('copiedText');
+          setTimeout(() => (copy.textContent = t('copyText')), 1500);
+        } catch {
+          // Without clipboard access the text can still be selected by hand.
+        }
+      },
+    },
+    t('copyText'),
+  );
+  const pane = h(
+    'aside',
+    { class: 'rules-text' },
+    h('div', { class: 'rules-text-head' }, h('div', { class: 'rules-title' }, h('strong', null, t('rulesTextTitle')), h('small', null, t('rulesTextNote'))), copy),
+    code,
+  );
+  return {
+    pane,
+    show(rule) {
+      text = ruleToText(rule, kind, names);
+      code.textContent = text || t('rulesTextEmpty');
+      code.classList.toggle('empty', !text);
+      copy.disabled = !text;
+    },
+  };
+}
+
 const PINNED_TOOLBOX = 'adventures-pinned';
 let toolboxRegistered = false;
 
@@ -107,15 +183,34 @@ export async function openRules(ctx: EditorContext, target: RuleTarget): Promise
   }
   const dialog = host;
   const area = h('div', { class: 'rules-blocks' });
+  const textPane = buildTextPane(ctx, target.kind);
+  textPane.pane.hidden = !textViewOpen();
+  let resizeBlocks = () => {};
+  const textToggle = h(
+    'button',
+    {
+      class: 'action rules-text-toggle',
+      title: t('rulesTextShow'),
+      'aria-label': t('rulesTextShow'),
+      'aria-pressed': String(!textPane.pane.hidden),
+      onclick: () => {
+        textPane.pane.hidden = !textPane.pane.hidden;
+        textToggle.setAttribute('aria-pressed', String(!textPane.pane.hidden));
+        setTextViewOpen(!textPane.pane.hidden);
+        resizeBlocks();
+      },
+    },
+    '</>',
+  );
   content.replaceChildren(
     h(
       'div',
       { class: 'rules-head' },
       h('div', { class: 'rules-title' }, h('strong', null, `◆ ${target.title}`), h('small', null, t('rulesHelp'))),
-      h('button', { class: 'action primary', onclick: () => dialog.close() }, t('done')),
+      h('div', { class: 'button-row' }, textToggle, h('button', { class: 'action primary', onclick: () => dialog.close() }, t('done'))),
     ),
     target.extra?.length ? h('div', { class: 'rules-extra' }, target.extra) : '',
-    area,
+    h('div', { class: 'rules-body' }, area, textPane.pane),
   );
   dialog.showModal();
 
@@ -147,12 +242,15 @@ export async function openRules(ctx: EditorContext, target: RuleTarget): Promise
   // Compare against what the blocks say right after loading, so that merely opening
   // the editor never counts as a change.
   let last = JSON.stringify(current());
+  textPane.show(current());
+  resizeBlocks = () => B.svgResize(workspace);
   workspace.addChangeListener((event) => {
     if (event.isUiEvent) return;
     const next = current();
     const text = JSON.stringify(next);
     if (text === last) return;
     last = text;
+    textPane.show(next);
     ctx.change((doc) => target.write(doc, next), { merge: target.mergeKey, quiet: true });
   });
 

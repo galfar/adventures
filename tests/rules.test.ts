@@ -92,3 +92,68 @@ test('references are collected for the drop-down lists', () => {
   });
   assert.deepEqual([[...refs.actions], [...refs.counters], [...refs.items], [...refs.pages]], [['a'], ['gold'], ['key'], ['p']]);
 });
+
+test('a rule written as text reads like the story, by names', async () => {
+  const { ruleToText } = await import('../src/editor/rules/text.ts');
+  const url = new URL('../public/adventures/goblin-cave/story.json', import.meta.url);
+  const story: Story = normalizeStory(JSON.parse(readFileSync(url, 'utf8')));
+  const byId = <T extends { id: string }>(list: T[], name: (thing: T) => string) => (id: string) => {
+    const thing = list.find((entry) => entry.id === id);
+    return thing ? name(thing) : undefined;
+  };
+  const names = {
+    item: byId(story.items, (item) => item.name),
+    page: byId(story.pages, (page) => page.title ?? page.id),
+    action: byId(
+      story.pages.flatMap((page) => page.actions.map((action) => ({ id: action.id, text: `${page.title}: ${action.label}` }))),
+      (action) => action.text,
+    ),
+    counter: byId(story.counters, (counter) => counter.name),
+    profession: byId(story.professions, (profession) => profession.name),
+  };
+  const action = (id: string) => story.pages.flatMap((page) => page.actions).find((entry) => entry.id === id)!;
+
+  assert.equal(
+    ruleToText(action('shop-shield'), 'choice', names),
+    ['available if Gold >= 8', 'when picked:', '    Gold -= 8', '    give("Wooden shield")'].join('\n'),
+  );
+  assert.equal(
+    ruleToText(action('hall-sneak'), 'choice', names),
+    [
+      'when picked:',
+      '    if is("Thief"):',
+      '        say("Your fingers are light as a feather. The king does not even twitch.")',
+      '        give("Crown of Oakham")',
+      '        goto("Hero of Oakham")',
+      '    chance(30%):',
+      '        say("You hold your breath... and it works!")',
+      '        give("Crown of Oakham")',
+      '        goto("Hero of Oakham")',
+      '    else:',
+      '        say("A bone cracks under your foot. The king opens his eyes!")',
+      '        goto("The Goblin King")',
+    ].join('\n'),
+  );
+  assert.equal(
+    ruleToText({ when: action('chest-key').when }, 'condition', names),
+    'has("Rusty key") and not did("Bottom of the pit: Pick the lock")',
+  );
+  assert.equal(
+    ruleToText(
+      {
+        when: {
+          type: 'or',
+          any: [
+            { type: 'and', all: [{ type: 'hasItem', item: 'torch' }, { type: 'compare', left: { itemCount: 'rope' }, op: '=', right: 2 }] },
+            { type: 'not', cond: { type: 'or', any: [{ type: 'visited', page: 'gone' }, { type: 'won', page: 'wolf' }] } },
+          ],
+        },
+      },
+      'condition',
+      names,
+    ),
+    '(has("Torch") and count("Rope") == 2) or not (visited(?gone) or won("The wolf"))',
+  );
+  assert.equal(ruleToText({}, 'choice', names), '');
+  assert.equal(ruleToText({ effects: [{ type: 'sound', file: 'x' } as unknown as Effect] }, 'effects', names), '# ? {"type":"sound","file":"x"}');
+});

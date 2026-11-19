@@ -78,7 +78,7 @@ is fetched only when the block editor is first opened.
 | Command | What it does |
 |---|---|
 | `npm run dev` | player at http://localhost:5173, editor at http://localhost:5173/editor.html |
-| `npm test` | engine, ZIP, editor and block-conversion tests (35 tests) |
+| `npm test` | engine, ZIP, editor and block-conversion tests (36 tests) |
 | `npm run template` | rebuild `public/player-template.html` (also run by `dev` and `build`) |
 | `npm run build` | type-check, then build the static site into `dist/` |
 
@@ -397,6 +397,11 @@ How it is built:
 - When the dialog is at least 640 px wide, the palette stays open: the first group of blocks is
   shown at once, and dragging a block out or clicking the workspace does not close it (a small
   `Toolbox` subclass in `rules/dialog.ts`). Narrower screens keep Blockly's pop-out menu.
+- For experienced authors, a quiet "</>" button shows the rule as short Python-like text beside
+  the blocks (`rules/text.ts`), with a Copy button, for example
+  `available if Gold >= 8` / `when picked:` / `give("Wooden shield")`. Things appear by name,
+  deleted ones as `?id`. It is read-only and follows every block change; whether it is open
+  is remembered in the browser. Nothing parses the text back (yet).
 - Conditions or effects this editor does not know (from a newer version) become a grey
   "cannot show" block that carries the original JSON along, so nothing is lost.
 - "a and b and c" is drawn as nested two-slot blocks and stored flat again. A comparison written

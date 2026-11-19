@@ -830,9 +830,81 @@ textarea {
   margin: 0;
 }
 
-.rules-blocks {
+.rules-body {
+  display: flex;
   flex: 1;
   min-height: 0;
+}
+
+.rules-blocks {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* The small "</>" button: meant for experienced authors, so it stays quiet. */
+.rules-text-toggle {
+  min-width: 2.6rem;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.rules-text-toggle[aria-pressed='true'] {
+  color: #6d28d9;
+  background: #f1e9ff;
+}
+
+.rules-text {
+  display: flex;
+  flex-direction: column;
+  width: min(26rem, 40%);
+  min-height: 0;
+  border-left: 1px solid var(--line);
+  background: #fbfaf7;
+}
+
+.rules-text[hidden] {
+  display: none;
+}
+
+.rules-text-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.rules-text-code {
+  flex: 1;
+  margin: 0;
+  padding: 0.75rem;
+  overflow: auto;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre;
+  user-select: text;
+}
+
+.rules-text-code.empty {
+  font-family: inherit;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 700px) {
+  .rules-body {
+    flex-direction: column;
+  }
+
+  .rules-text {
+    width: auto;
+    max-height: 40%;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
 }
 
 /* ---- Lists of items, counters and professions ---------------------------------- */
