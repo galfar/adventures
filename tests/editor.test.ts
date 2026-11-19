@@ -128,3 +128,63 @@ test('pages without a position get one, and labels fall back to the text', () =>
   assert.equal(pageLabel(doc.story.pages[1]!, '?'), 'A dark cave.');
   assert.equal(pageLabel(doc.story.pages[0]!, 'Empty page'), 'Empty page');
 });
+
+test('a copied choice comes right after the original, with its rules and a new id', async () => {
+  const { duplicateAction } = await import('../src/editor/ops.ts');
+  const doc = newDoc();
+  const page = doc.story.pages[0]!;
+  const first = addAction(doc, page.id)!;
+  first.label = 'Buy';
+  first.effects = [{ type: 'changeCounter', counter: 'gold', by: -4 }];
+  addAction(doc, page.id);
+  const copy = duplicateAction(doc, page.id, first.id)!;
+  assert.deepEqual(page.actions.map((a) => a.id), [first.id, copy.id, page.actions[2]!.id]);
+  assert.notEqual(copy.id, first.id);
+  assert.deepEqual(copy.effects, first.effects);
+  copy.effects![0] = { type: 'message', text: 'changed' };
+  assert.equal(first.effects[0]!.type, 'changeCounter', 'the copy does not share its rules with the original');
+});
+
+test('a copied page refers to itself and its own choices, and to other pages as before', async () => {
+  const { duplicatePage } = await import('../src/editor/ops.ts');
+  const doc = newDoc();
+  const start = doc.story.pages[0]!;
+  const other = addPage(doc, { x: 0, y: 300 });
+  start.title = 'Chest';
+  const open = addAction(doc, start.id)!;
+  const pick = addAction(doc, start.id, other.id)!;
+  open.when = { type: 'not', cond: { type: 'did', action: pick.id } };
+  pick.effects = [{ type: 'goto', page: start.id }];
+  start.extraTexts = [{ when: { type: 'won', page: start.id }, text: 'won' }];
+  start.combat = { enemy: { name: 'x', hp: 1, attack: 1, defense: 1 }, onWin: { target: start.id } };
+
+  const copy = duplicatePage(doc, start.id, (title) => `${title} (copy)`)!;
+  assert.equal(copy.title, 'Chest (copy)');
+  assert.notEqual(copy.id, start.id);
+  const [copyOpen, copyPick] = copy.actions;
+  assert.ok(copyOpen!.id !== open.id && copyPick!.id !== pick.id);
+  assert.deepEqual(copyOpen!.when, { type: 'not', cond: { type: 'did', action: copyPick!.id } });
+  assert.equal(copyPick!.target, other.id);
+  assert.deepEqual(copyPick!.effects, [{ type: 'goto', page: copy.id }]);
+  assert.deepEqual(copy.extraTexts![0]!.when, { type: 'won', page: copy.id });
+  assert.equal(copy.combat!.onWin!.target, copy.id);
+  assert.deepEqual(open.when, { type: 'not', cond: { type: 'did', action: pick.id } }, 'the original is untouched');
+  assert.ok(copy.pos && (copy.pos.x !== start.pos!.x || copy.pos.y !== start.pos!.y));
+});
+
+test('pasted rules are added to what is there', async () => {
+  const { combineRules, canPasteRules } = await import('../src/editor/ops.ts');
+  const has = { type: 'hasItem', item: 'key' } as const;
+  const did = { type: 'did', action: 'a' } as const;
+  const say = { type: 'message', text: 'hi' } as const;
+  const give = { type: 'giveItem', item: 'key' } as const;
+  assert.deepEqual(combineRules({ when: has, effects: [say] }, { when: did, effects: [give] }, 'choice'), {
+    when: { type: 'and', all: [has, did] },
+    effects: [say, give],
+  });
+  assert.deepEqual(combineRules({}, { when: did, effects: [give] }, 'effects'), { effects: [give] });
+  assert.deepEqual(combineRules({}, { when: did, effects: [give] }, 'condition'), { when: did });
+  assert.equal(canPasteRules({ effects: [give] }, 'condition'), false);
+  assert.equal(canPasteRules({ when: did }, 'effects'), false);
+  assert.equal(canPasteRules({ when: did }, 'choice'), true);
+});

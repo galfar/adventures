@@ -78,7 +78,7 @@ is fetched only when the block editor is first opened.
 | Command | What it does |
 |---|---|
 | `npm run dev` | player at http://localhost:5173, editor at http://localhost:5173/editor.html |
-| `npm test` | engine, ZIP, editor and block-conversion tests (36 tests) |
+| `npm test` | engine, ZIP, editor and block-conversion tests (39 tests) |
 | `npm run template` | rebuild `public/player-template.html` (also run by `dev` and `build`) |
 | `npm run build` | type-check, then build the static site into `dist/` |
 
@@ -356,6 +356,12 @@ The rest of this section describes the design; where the built part differs, it 
 - **Page panel** (right): text, picture, choices, and optional sections for fight, extra texts
   and "when the hero arrives" effects. A choice is a label and a target page chosen from a list.
   A small ◆ button on a choice opens its blocks.
+- **Copying** (on trial): ⧉ on a choice puts a copy right after it, rules included.
+  "Make a copy of this page" copies a page with all its choices next to it; whatever inside
+  it referred to the page itself or to its own choices now refers to the copy. In the block
+  editor, Copy and Paste carry whole rules from one place to another: pasting adds to what is
+  there (conditions must both hold, effects run one after the other), only the parts that
+  fit, and as one undo step. Copied rules are kept in the browser, so they survive a reload.
 - **Other tabs**: tables for items, counters, the hero and professions, and story settings
   (title, author, language, visual style with preview).
 - On a phone the map and the page panel become two screens instead of two columns.

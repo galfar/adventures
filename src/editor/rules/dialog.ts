@@ -4,6 +4,7 @@ import type { EditorContext } from '../context.ts';
 import { defineBlocks, setLists, toolbox, type Lists, type Option } from './blocks.ts';
 import { ruleRefs, ruleToWorkspace, workspaceToRule, type Rule, type RuleKind, type WorkspaceState } from './convert.ts';
 import { ruleToText, type TextNames } from './text.ts';
+import { canPasteRules, combineRules } from '../ops.ts';
 
 /**
  * The block editor: a full-screen dialog with one Blockly workspace for one rule
@@ -71,6 +72,39 @@ function buildLists(ctx: EditorContext, rule: Rule): Lists {
       ...items.map(([name, id]): Option => [t('bCountOf', { name }), `item:${id}`]),
     ],
   };
+}
+
+const CLIPBOARD_KEY = 'adventures.editor.rulesClipboard';
+
+interface Clip {
+  /** Where the rules were copied from, shown when pasting. */
+  title: string;
+  rule: Rule;
+}
+
+/** Copied rules live in the browser, so they can be pasted into any rule, even after a reload. */
+let memoryClip: Clip | undefined;
+
+function writeClipboard(clip: Clip): void {
+  memoryClip = structuredClone(clip);
+  try {
+    localStorage.setItem(CLIPBOARD_KEY, JSON.stringify(clip));
+  } catch {
+    // Kept in memory only.
+  }
+}
+
+function readClipboard(): Clip | undefined {
+  try {
+    const stored = localStorage.getItem(CLIPBOARD_KEY);
+    if (stored) {
+      const clip = JSON.parse(stored) as Clip;
+      if (clip && typeof clip.title === 'string' && clip.rule && typeof clip.rule === 'object') return clip;
+    }
+  } catch {
+    // Fall back to memory.
+  }
+  return memoryClip;
 }
 
 const TEXT_VIEW_KEY = 'adventures.editor.rulesText';
@@ -202,12 +236,57 @@ export async function openRules(ctx: EditorContext, target: RuleTarget): Promise
     },
     '</>',
   );
+  // Copy and paste of whole rules. Pasting adds to what is here, as one undo step.
+  const copyButton = h(
+    'button',
+    {
+      class: 'action rules-clip',
+      title: t('copyRulesTitle'),
+      'aria-label': t('copyRulesTitle'),
+      onclick: () => {
+        writeClipboard({ title: target.title, rule: current() });
+        copyButton.lastElementChild!.textContent = t('copiedText');
+        setTimeout(() => (copyButton.lastElementChild!.textContent = t('copyRules')), 1500);
+        updatePaste();
+      },
+    },
+    '📋',
+    h('span', null, t('copyRules')),
+  );
+  const pasteButton = h(
+    'button',
+    {
+      class: 'action rules-clip',
+      onclick: () => {
+        const clip = readClipboard();
+        if (!clip || !canPasteRules(clip.rule, target.kind)) return;
+        B.serialization.workspaces.load(ruleToWorkspace(combineRules(current(), clip.rule, target.kind), target.kind), workspace);
+        // What the blocks now say (the same rules, tidied up by the blocks).
+        const next = current();
+        last = JSON.stringify(next);
+        textPane.show(next);
+        ctx.change((doc) => target.write(doc, next), { quiet: true });
+      },
+    },
+    '📥',
+    h('span', null, t('pasteRules')),
+  );
+  const updatePaste = () => {
+    const clip = readClipboard();
+    const fits = !!clip && canPasteRules(clip.rule, target.kind);
+    pasteButton.disabled = !fits;
+    const title = !clip ? t('pasteNothing') : fits ? t('pasteRulesTitle', { title: clip.title }) : t('pasteDoesNotFit');
+    pasteButton.title = title;
+    pasteButton.setAttribute('aria-label', title);
+  };
+  updatePaste();
+
   content.replaceChildren(
     h(
       'div',
       { class: 'rules-head' },
       h('div', { class: 'rules-title' }, h('strong', null, `◆ ${target.title}`), h('small', null, t('rulesHelp'))),
-      h('div', { class: 'button-row' }, textToggle, h('button', { class: 'action primary', onclick: () => dialog.close() }, t('done'))),
+      h('div', { class: 'button-row' }, copyButton, pasteButton, textToggle, h('button', { class: 'action primary', onclick: () => dialog.close() }, t('done'))),
     ),
     target.extra?.length ? h('div', { class: 'rules-extra' }, target.extra) : '',
     h('div', { class: 'rules-body' }, area, textPane.pane),
@@ -219,7 +298,8 @@ export async function openRules(ctx: EditorContext, target: RuleTarget): Promise
   registerToolbox(B);
   // With enough room, the blocks of the chosen group stay on show instead of a menu
   // that has to be opened again for every block.
-  const pinned = area.clientWidth >= 640;
+  // Measured on the whole dialog, so an open text view does not change the palette.
+  const pinned = content.clientWidth >= 640;
   const workspace = B.inject(area, {
     toolbox: toolbox(target.kind, t),
     plugins: pinned ? { toolbox: PINNED_TOOLBOX } : {},

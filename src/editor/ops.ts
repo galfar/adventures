@@ -1,6 +1,7 @@
 import type { EditorDoc } from '../shared/db.ts';
 import { FORMAT_VERSION, type Action, type ActionId, type Effect, type Page, type PageId, type Story } from '../shared/format/types.ts';
 import { forEachEffect } from '../shared/format/validate.ts';
+import type { Rule } from './rules/convert.ts';
 
 /**
  * The editing operations, as plain functions that modify a document copy.
@@ -142,6 +143,72 @@ export function moveAction(doc: EditorDoc, pageId: PageId, actionId: ActionId, b
   const to = from + by;
   if (from < 0 || to < 0 || to >= actions.length) return;
   [actions[from], actions[to]] = [actions[to]!, actions[from]!];
+}
+
+/** Puts a copy of a choice right after it. Its rules are copied too. */
+export function duplicateAction(doc: EditorDoc, pageId: PageId, actionId: ActionId): Action | undefined {
+  const actions = findPage(doc.story, pageId)?.actions;
+  const index = actions?.findIndex((action) => action.id === actionId) ?? -1;
+  if (!actions || index < 0) return undefined;
+  const copy: Action = { ...structuredClone(actions[index]!), id: newId('a', allActionIds(doc.story)) };
+  actions.splice(index + 1, 0, copy);
+  return copy;
+}
+
+/**
+ * Puts a copy of a page next to it, with all its choices and rules. Whatever inside the
+ * page referred to the page itself or to its own choices (its own fight, "the chest was
+ * already opened") now refers to the copy; references to other pages stay as they are.
+ */
+export function duplicatePage(doc: EditorDoc, pageId: PageId, title: (old: string) => string): Page | undefined {
+  const original = findPage(doc.story, pageId);
+  if (!original) return undefined;
+  const copy = structuredClone(original);
+  copy.id = newId(
+    'p',
+    doc.story.pages.map((page) => page.id),
+  );
+  const taken = allActionIds(doc.story);
+  const renamed = new Map<string, string>();
+  for (const action of copy.actions) {
+    const id = newId('a', taken);
+    taken.push(id);
+    renamed.set(action.id, id);
+    action.id = id;
+  }
+  const remap = (value: unknown): void => {
+    if (Array.isArray(value)) return value.forEach(remap);
+    if (!value || typeof value !== 'object') return;
+    const record = value as Record<string, unknown>;
+    for (const [key, inner] of Object.entries(record)) {
+      if (key === 'action' && typeof inner === 'string' && renamed.has(inner)) record[key] = renamed.get(inner);
+      else if ((key === 'page' || key === 'target') && inner === pageId) record[key] = copy.id;
+      else remap(inner);
+    }
+  };
+  remap(copy);
+  copy.title = title(original.title ?? '');
+  copy.pos = spotNear(doc.story, original);
+  doc.story.pages.push(copy);
+  return copy;
+}
+
+/**
+ * Adds copied rules to existing ones: conditions must both hold, effects run one after the
+ * other. Only the parts this place can hold are taken (a condition has no effects).
+ */
+export function combineRules(existing: Rule, pasted: Rule, kind: 'choice' | 'effects' | 'condition'): Rule {
+  const result: Rule = {};
+  const when = kind === 'effects' ? existing.when : pasted.when && existing.when ? { type: 'and' as const, all: [existing.when, pasted.when] } : (pasted.when ?? existing.when);
+  const effects = kind === 'condition' ? existing.effects : [...(existing.effects ?? []), ...(pasted.effects ?? [])];
+  if (when) result.when = structuredClone(when);
+  if (effects?.length) result.effects = structuredClone(effects);
+  return result;
+}
+
+/** Whether copied rules have anything that this place can hold. */
+export function canPasteRules(pasted: Rule, kind: 'choice' | 'effects' | 'condition'): boolean {
+  return (kind !== 'effects' && !!pasted.when) || (kind !== 'condition' && !!pasted.effects?.length);
 }
 
 /** A copy of a story for a new project: new story id, everything else the same. */

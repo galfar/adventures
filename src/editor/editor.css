@@ -894,7 +894,16 @@ textarea {
   color: var(--ink-soft);
 }
 
+.rules-clip {
+  gap: 0.3rem;
+}
+
 @media (max-width: 700px) {
+  /* On a phone the copy and paste buttons show only their pictures. */
+  .rules-clip span {
+    display: none;
+  }
+
   .rules-body {
     flex-direction: column;
   }

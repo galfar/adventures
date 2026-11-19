@@ -2,7 +2,7 @@ import type { EditorDoc } from '../shared/db.ts';
 import { h } from '../shared/dom.ts';
 import type { Action, ConditionalText, Page, PageId } from '../shared/format/types.ts';
 import type { EditorContext } from './context.ts';
-import { addAction, addPage, deletePage, findPage, moveAction, spotNear } from './ops.ts';
+import { addAction, addPage, deletePage, duplicateAction, duplicatePage, findPage, moveAction, spotNear } from './ops.ts';
 import type { Rule } from './rules/convert.ts';
 import { openRules, type RuleTarget } from './rules/dialog.ts';
 import type { ChangeOptions } from './store.ts';
@@ -246,6 +246,11 @@ export function buildPanel(ctx: EditorContext): Child[] {
         { class: 'choice-tools' },
         toolButton('▲', t('moveUp'), index === 0, () => ctx.change((doc) => moveAction(doc, id, action.id, -1))),
         toolButton('▼', t('moveDown'), index === page.actions.length - 1, () => ctx.change((doc) => moveAction(doc, id, action.id, 1))),
+        toolButton('⧉', t('duplicateChoice'), false, () => {
+          let created: string | undefined;
+          ctx.change((doc) => void (created = duplicateAction(doc, id, action.id)?.id));
+          if (created) ctx.focusField(`action-label:${created}`);
+        }),
         toolButton('🗑', t('deleteChoice'), false, () => edit((p) => void (p.actions = p.actions.filter((a) => a.id !== action.id)))),
       ),
     );
@@ -497,7 +502,21 @@ export function buildPanel(ctx: EditorContext): Child[] {
     ),
     h(
       'section',
-      { class: 'section' },
+      { class: 'section button-row' },
+      h(
+        'button',
+        {
+          class: 'action',
+          type: 'button',
+          onclick: () => {
+            let created: string | undefined;
+            ctx.change((doc) => void (created = duplicatePage(doc, id, () => t('copyOf', { title: ctx.label(page) }))?.id));
+            // Show the copy: its name ready to change, and the page itself on the map.
+            if (created) ctx.select(created, { focus: 'title', reveal: true });
+          },
+        },
+        `⧉ ${t('duplicatePage')}`,
+      ),
       h(
         'button',
         { class: 'action danger', type: 'button', disabled: onlyPage, title: onlyPage ? t('lastPage') : '', onclick: () => ctx.change((doc) => void deletePage(doc, id)) },
