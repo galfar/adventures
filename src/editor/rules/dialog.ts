@@ -72,6 +72,25 @@ function buildLists(ctx: EditorContext, rule: Rule): Lists {
   };
 }
 
+const PINNED_TOOLBOX = 'adventures-pinned';
+let toolboxRegistered = false;
+
+/**
+ * A toolbox whose group of blocks never closes: clicking the open group again, or
+ * clicking the workspace, keeps its blocks on show. Choosing another group still works.
+ */
+function registerToolbox(B: typeof import('blockly/core')): void {
+  if (toolboxRegistered) return;
+  toolboxRegistered = true;
+  class PinnedToolbox extends B.Toolbox {
+    override setSelectedItem(item: Parameters<InstanceType<typeof B.Toolbox>['setSelectedItem']>[0]): void {
+      if (item === null || item === this.getSelectedItem()) return;
+      super.setSelectedItem(item);
+    }
+  }
+  B.registry.register(B.registry.Type.TOOLBOX, PINNED_TOOLBOX, PinnedToolbox);
+}
+
 /** Opens the block editor for one rule. Resolves when the author closes it. */
 export async function openRules(ctx: EditorContext, target: RuleTarget): Promise<void> {
   const { t } = ctx;
@@ -102,8 +121,13 @@ export async function openRules(ctx: EditorContext, target: RuleTarget): Promise
 
   defineBlocks(B, t);
   setLists(buildLists(ctx, rule));
+  registerToolbox(B);
+  // With enough room, the blocks of the chosen group stay on show instead of a menu
+  // that has to be opened again for every block.
+  const pinned = area.clientWidth >= 640;
   const workspace = B.inject(area, {
     toolbox: toolbox(target.kind, t),
+    plugins: pinned ? { toolbox: PINNED_TOOLBOX } : {},
     renderer: 'zelos',
     media: 'blockly-media/',
     sounds: false,
@@ -111,6 +135,12 @@ export async function openRules(ctx: EditorContext, target: RuleTarget): Promise
     zoom: { controls: true, wheel: true, startScale: 0.85, minScale: 0.4, maxScale: 1.6 },
     move: { scrollbars: true, drag: true, wheel: false },
   });
+  if (pinned) {
+    const flyout = workspace.getFlyout();
+    if (flyout instanceof B.Flyout) flyout.setAutoClose(false);
+    else if (flyout) flyout.autoClose = false;
+    workspace.getToolbox()?.selectItemByPosition(0);
+  }
   B.serialization.workspaces.load(ruleToWorkspace(rule, target.kind), workspace);
 
   const current = () => workspaceToRule(B.serialization.workspaces.save(workspace) as WorkspaceState);

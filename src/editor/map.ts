@@ -17,6 +17,14 @@ const MAX_ZOOM = 2;
 /** A press that moves less than this is a click, not a drag. */
 const CLICK_SLOP = 5;
 
+/** A rectangle on the map: a page box or an arrow's text. */
+interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 interface Point {
   x: number;
   y: number;
@@ -179,7 +187,10 @@ export class MapView {
     const { ctx } = this;
     const pages = new Map(ctx.story.pages.map((page) => [page.id, page]));
     const perPair = new Map<string, number>();
-    const drawn: SVGElement[] = [];
+    const boxes: Box[] = ctx.story.pages.map((page) => ({ ...this.position(page), w: NODE_WIDTH, h: NODE_HEIGHT }));
+    // Each placed text is added here too, so later texts keep clear of it.
+    const lines: SVGElement[] = [];
+    const labels: SVGElement[] = [];
     for (const page of ctx.story.pages) {
       for (const link of pageLinks(page)) {
         const target = pages.get(link.target);
@@ -187,15 +198,27 @@ export class MapView {
         const pair = `${page.id}>${target.id}`;
         const nth = perPair.get(pair) ?? 0;
         perPair.set(pair, nth + 1);
-        drawn.push(...this.edge(page, target, link, nth));
+        const [line, label] = this.edge(page, target, link, nth, boxes);
+        lines.push(line);
+        labels.push(label);
       }
     }
-    this.edges.replaceChildren(...drawn);
+    // Texts go last so that no arrow is drawn across another arrow's text.
+    this.edges.replaceChildren(...lines, ...labels);
   }
 
-  private edge(from: Page, to: Page, link: Link, nth: number): SVGElement[] {
+  private edge(from: Page, to: Page, link: Link, nth: number, boxes: Box[]): [SVGElement, SVGElement] {
     const a = this.position(from);
     const b = this.position(to);
+    const { t } = this.ctx;
+    const text =
+      link.kind === 'win'
+        ? `⚔ ${t('edgeWin')}`
+        : link.kind === 'lose'
+          ? `⚔ ${t('edgeLose')}`
+          : link.kind === 'flee'
+            ? `⚔ ${t('edgeFlee')}`
+            : shorten(link.label.trim() || '?', 24);
     let d: string;
     let label: Point;
     if (from.id === to.id) {
@@ -210,37 +233,50 @@ export class MapView {
       const c0 = { x: a.x + NODE_WIDTH / 2, y: a.y + NODE_HEIGHT / 2 };
       const c1 = { x: b.x + NODE_WIDTH / 2, y: b.y + NODE_HEIGHT / 2 };
       const length = Math.hypot(c1.x - c0.x, c1.y - c0.y) || 1;
-      const bend = (18 + nth * 24) * 2;
-      const control = {
-        x: (c0.x + c1.x) / 2 - ((c1.y - c0.y) / length) * bend,
-        y: (c0.y + c1.y) / 2 + ((c1.x - c0.x) / length) * bend,
+      const curve = (bend: number) => {
+        const control = {
+          x: (c0.x + c1.x) / 2 - ((c1.y - c0.y) / length) * bend,
+          y: (c0.y + c1.y) / 2 + ((c1.x - c0.x) / length) * bend,
+        };
+        const p0 = borderPoint(c0, control, 0);
+        const p1 = borderPoint(c1, control, 5);
+        // The text sits nearer the page the arrow starts from, so the texts of a
+        // "there" arrow and a "back" arrow do not land on top of each other.
+        const at = 0.32;
+        const w0 = (1 - at) ** 2;
+        const w1 = 2 * at * (1 - at);
+        const w2 = at ** 2;
+        const point = { x: w0 * p0.x + w1 * control.x + w2 * p1.x, y: w0 * p0.y + w1 * control.y + w2 * p1.y };
+        return { d: `M${p0.x} ${p0.y} Q${control.x} ${control.y} ${p1.x} ${p1.y}`, point };
       };
-      const p0 = borderPoint(c0, control, 0);
-      const p1 = borderPoint(c1, control, 5);
-      d = `M${p0.x} ${p0.y} Q${control.x} ${control.y} ${p1.x} ${p1.y}`;
-      // The text sits nearer the page the arrow starts from, so the texts of a
-      // "there" arrow and a "back" arrow do not land on top of each other.
-      const at = 0.32;
-      const w0 = (1 - at) ** 2;
-      const w1 = 2 * at * (1 - at);
-      const w2 = at ** 2;
-      label = { x: w0 * p0.x + w1 * control.x + w2 * p1.x, y: w0 * p0.y + w1 * control.y + w2 * p1.y };
+      // Pages that stand close together leave no room for the text between them
+      // (side by side especially). Then the arrow bends out further, until its text
+      // is clear of every page box, so it can be read and the arrow can be seen.
+      const base = (18 + nth * 24) * 2;
+      const halfWidth = text.length * 3.4 + 4;
+      const free = (p: Point) =>
+        boxes.every((box) => p.x + halfWidth < box.x || p.x - halfWidth > box.x + box.w || p.y + 9 < box.y || p.y - 9 > box.y + box.h);
+      // When only another text is in the way, nudging the text up or down a little is enough.
+      const nudges = [0, -16, 16, -32, 32];
+      let found: { d: string; point: Point } | undefined;
+      for (const dy of nudges) {
+        for (let bend = base; bend <= base + 200 && !found; bend += 10) {
+          const option = curve(bend);
+          const point = { x: option.point.x, y: option.point.y + dy };
+          if (free(point)) found = { d: option.d, point };
+        }
+        if (found) break;
+      }
+      const chosen = found ?? curve(base);
+      d = chosen.d;
+      label = chosen.point;
+      boxes.push({ x: label.x - halfWidth, y: label.y - 9, w: halfWidth * 2, h: 18 });
     }
 
-    const { t } = this.ctx;
-    const text =
-      link.kind === 'win'
-        ? `⚔ ${t('edgeWin')}`
-        : link.kind === 'lose'
-          ? `⚔ ${t('edgeLose')}`
-          : link.kind === 'flee'
-            ? `⚔ ${t('edgeFlee')}`
-            : shorten(link.label.trim() || '?', 24);
     const classes = `edge edge-${link.kind}${link.conditional ? ' conditional' : ''}`;
     const labelAttrs: Record<string, string | number> = { class: `edge-label edge-${link.kind}`, x: label.x, y: label.y + 4, 'data-page': from.id };
     if (link.actionId) labelAttrs['data-action'] = link.actionId;
-    return [svg('path', { class: classes, d, 'marker-end': `url(#arrow-${link.kind})` }), svg('text', labelAttrs, text)];
-  }
+    return [svg('path', { class: classes, d, 'marker-end': `url(#arrow-${link.kind})` }), svg('text', labelAttrs, text)];  }
 
   private position(page: Page): Point {
     if (this.dragged?.id === page.id) return this.dragged.pos;

@@ -349,6 +349,9 @@ The rest of this section describes the design; where the built part differs, it 
   empty space creates a new page and the choice leading to it in one move. Dragging onto another
   page links them. Badges mark the start page, endings, fights and hints. Pan, zoom, and an
   "tidy up" button. Built with SVG and pointer events so it works with mouse and touch.
+  Arrows bend away from each other, and further out where needed so that each arrow's text
+  is clear of every page box and of the texts already drawn (pages standing side by side get
+  one arc above and one below).
 - **Page panel** (right): text, picture, choices, and optional sections for fight, extra texts
   and "when the hero arrives" effects. A choice is a label and a target page chosen from a list.
   A small ◆ button on a choice opens its blocks.
@@ -390,6 +393,9 @@ How it is built:
   survive the round trip unchanged.
 - `rules/blocks.ts` defines how each block looks and what the palette offers. One block type per
   condition or effect (`cond_*`, `fx_*`).
+- When the dialog is at least 640 px wide, the palette stays open: the first group of blocks is
+  shown at once, and dragging a block out or clicking the workspace does not close it (a small
+  `Toolbox` subclass in `rules/dialog.ts`). Narrower screens keep Blockly's pop-out menu.
 - Conditions or effects this editor does not know (from a newer version) become a grey
   "cannot show" block that carries the original JSON along, so nothing is lost.
 - "a and b and c" is drawn as nested two-slot blocks and stored flat again. A comparison written
@@ -524,8 +530,9 @@ Known gaps in what is built:
   was exercised with simulated mouse events; touch dragging and pinch zoom are written but untested,
   and so are choosing, pasting and dropping pictures.
 - In the block editor, loading rules, drop-down lists, changing a field and saving were checked.
-  Dragging blocks out of the palette is Blockly's own behaviour and was not driven by the checks.
-  The block editor has not been tried on a phone-sized screen.
+  Dragging a block out of the open palette, switching groups and reopening were checked with
+  simulated mouse events; the block editor opened at phone size with the pop-out menu, but was
+  not used there further.
 - The map does not draw an arrow for a link to a deleted page; it shows as a hint instead.
 - When an author changes a story, an older saved game is kept if its page still exists and
   refused otherwise. There is no finer migration.
