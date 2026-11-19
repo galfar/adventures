@@ -1,7 +1,7 @@
 # Adventures: architecture of the player and the editor
 
 Status on 2026-11-17: **steps 1 to 4 are built.** Step 1 is the story format, game engine,
-player, two sample adventures and three visual styles. Step 2 is the editor's project list,
+player, three sample adventures and three visual styles. Step 2 is the editor's project list,
 page map, page panel, autosave, undo, trash, older versions, hints and play-testing. Step 3 is
 blocks for conditions and effects, and the lists of items, counters and professions. Step 4 is
 saving an adventure as one HTML file or a ZIP, and opening a ZIP. What remains is polish

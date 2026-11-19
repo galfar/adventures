@@ -10,5 +10,11 @@
     "title": "Ztracená stanice",
     "description": "Vesmírná stanice Kepler-9 přestala odpovídat. Letíš zjistit proč.",
     "language": "cs"
+  },
+  {
+    "path": "adventures/goblinska-jeskyne/",
+    "title": "Goblinská jeskyně",
+    "description": "Goblini ukradli zlatou korunu z Dubnice. Někdo ji musí přinést zpátky.",
+    "language": "cs"
   }
 ]

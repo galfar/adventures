@@ -13,7 +13,7 @@ function roundTrip(rule: Rule, kind: RuleKind): Rule {
 
 test('every rule in the sample adventures survives the block editor unchanged', () => {
   let checked = 0;
-  for (const name of ['goblin-cave', 'ztracena-stanice']) {
+  for (const name of ['goblin-cave', 'goblinska-jeskyne', 'ztracena-stanice']) {
     const url = new URL(`../public/adventures/${name}/story.json`, import.meta.url);
     const story: Story = normalizeStory(JSON.parse(readFileSync(url, 'utf8')));
     const check = (rule: Rule, kind: RuleKind, where: string) => {

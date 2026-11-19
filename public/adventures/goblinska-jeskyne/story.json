@@ -1,0 +1,343 @@
+{
+  "format": 1,
+  "id": "sample-goblinska-jeskyne",
+  "title": "Goblinská jeskyně",
+  "author": "Ukázka z Dobrodružství",
+  "description": "Goblini ukradli zlatou korunu z Dubnice. Někdo ji musí přinést zpátky.",
+  "language": "cs",
+  "theme": "fantasy",
+  "cover": "images/village.svg",
+  "startPage": "village",
+  "hero": { "stats": { "hp": 20, "attack": 3, "defense": 2 } },
+  "professions": [
+    {
+      "id": "knight",
+      "name": "Rytíř",
+      "description": "Silný a dobře obrněný. Většinu potíží řeší mečem.",
+      "stats": { "hp": 22, "attack": 3, "defense": 3 },
+      "items": [{ "item": "sword" }],
+      "choose": { "count": 1, "from": ["potion", "torch", "rope"] }
+    },
+    {
+      "id": "thief",
+      "name": "Zloděj",
+      "description": "Tichý a hbitý. Zámky jsou pro něj jen návrh.",
+      "stats": { "hp": 16, "attack": 2, "defense": 2 },
+      "items": [{ "item": "dagger" }],
+      "choose": { "count": 2, "from": ["potion", "torch", "rope"] }
+    },
+    {
+      "id": "wizard",
+      "name": "Čaroděj",
+      "description": "Slabý na těle, nebezpečný s holí plnou jisker.",
+      "stats": { "hp": 14, "attack": 3, "defense": 1 },
+      "items": [{ "item": "staff" }, { "item": "potion" }],
+      "choose": { "count": 1, "from": ["torch", "rope"] }
+    }
+  ],
+  "items": [
+    { "id": "sword", "name": "Meč", "description": "Dobrá ocelová čepel.", "bonus": { "attack": 1 } },
+    { "id": "dagger", "name": "Dýka", "description": "Krátká a ostrá.", "bonus": { "attack": 1 } },
+    { "id": "staff", "name": "Jiskřivá hůl", "description": "Praská blesky.", "bonus": { "attack": 2 } },
+    { "id": "shield", "name": "Dřevěný štít", "description": "Je promáčklý, ale drží.", "bonus": { "defense": 1 } },
+    {
+      "id": "potion",
+      "name": "Léčivý lektvar",
+      "description": "Chutná po mátě. Vyléčí 8 životů.",
+      "use": { "effects": [{ "type": "changeStat", "stat": "hp", "by": 8 }] }
+    },
+    { "id": "torch", "name": "Pochodeň", "description": "Světlo do tmavých míst." },
+    { "id": "rope", "name": "Lano", "description": "Deset metrů pevného lana." },
+    { "id": "key", "name": "Rezavý klíč", "description": "Něco určitě odemyká." },
+    { "id": "amulet", "name": "Stříbrný amulet", "description": "Je hřejivý a chrání.", "bonus": { "defense": 1 } },
+    { "id": "crown", "name": "Koruna z Dubnice", "description": "Těžká, zlatá a konečně nalezená." }
+  ],
+  "counters": [{ "id": "gold", "name": "Zlato", "start": 5, "min": 0, "show": true, "icon": "💰" }],
+  "pages": [
+    {
+      "id": "village",
+      "title": "Dubnice",
+      "image": "images/village.svg",
+      "text": "Stojíš na návsi vesnice Dubnice. Minulou noc se do radnice připlížili goblini a ukradli zlatou korunu.\n\n„Přines ji zpátky,“ říká starý starosta, „a celá vesnice si bude pamatovat tvé jméno.“",
+      "extraTexts": [
+        { "when": { "type": "visited", "page": "forest" }, "text": "Vesničané se na tebe dívají s nadějí. Koruna je pořád pryč." }
+      ],
+      "actions": [
+        { "id": "village-shop", "label": "Zajít za obchodníkem", "target": "shop" },
+        { "id": "village-forest", "label": "Vydat se stezkou do lesa", "target": "forest" }
+      ],
+      "pos": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "shop",
+      "title": "Obchodník",
+      "text": "Kulatý muž za pultem si mne ruce. „Štíty, lektvary, to nejlepší v Dubnici! Samozřejmě jen za zlato.“",
+      "actions": [
+        {
+          "id": "shop-shield",
+          "label": "Koupit dřevěný štít (8 zlatých)",
+          "when": { "type": "compare", "left": { "counter": "gold" }, "op": ">=", "right": 8 },
+          "lockedHint": "Potřebuješ 8 zlatých.",
+          "once": true,
+          "effects": [
+            { "type": "changeCounter", "counter": "gold", "by": -8 },
+            { "type": "giveItem", "item": "shield" }
+          ]
+        },
+        {
+          "id": "shop-potion",
+          "label": "Koupit léčivý lektvar (4 zlaté)",
+          "when": { "type": "compare", "left": { "counter": "gold" }, "op": ">=", "right": 4 },
+          "lockedHint": "Potřebuješ 4 zlaté.",
+          "effects": [
+            { "type": "changeCounter", "counter": "gold", "by": -4 },
+            { "type": "giveItem", "item": "potion" }
+          ]
+        },
+        { "id": "shop-leave", "label": "Vrátit se na náves", "target": "village" }
+      ],
+      "pos": { "x": -260, "y": 0 }
+    },
+    {
+      "id": "forest",
+      "title": "Lesní stezka",
+      "image": "images/forest.svg",
+      "text": "Stezka se vine mezi starými duby. Stopy goblinů vedou na sever, k pahorkům. V křoví vedle cesty něco šustí.",
+      "onFirstVisit": [
+        { "type": "message", "text": "V blátě leží malý váček. Někdo velmi spěchal." },
+        { "type": "changeCounter", "counter": "gold", "by": 4 }
+      ],
+      "extraTexts": [{ "when": { "type": "won", "page": "wolf" }, "text": "V křoví je ticho." }],
+      "actions": [
+        { "id": "forest-cave", "label": "Jít na sever k pahorkům", "target": "cave-mouth" },
+        {
+          "id": "forest-bushes",
+          "label": "Nakouknout do křoví",
+          "target": "wolf",
+          "when": { "type": "not", "cond": { "type": "won", "page": "wolf" } }
+        },
+        { "id": "forest-village", "label": "Vrátit se do vesnice", "target": "village" }
+      ],
+      "pos": { "x": 0, "y": 180 }
+    },
+    {
+      "id": "wolf",
+      "title": "Vlk",
+      "text": "Z křoví vyskočí šedý vlk a vycení zuby!",
+      "combat": {
+        "enemy": { "name": "Šedý vlk", "hp": 7, "attack": 2, "defense": 0 },
+        "onWin": {
+          "effects": [
+            { "type": "message", "text": "Ve vlčím doupěti se mezi kostmi něco leskne." },
+            { "type": "giveItem", "item": "key" }
+          ]
+        },
+        "flee": { "target": "forest", "effects": [{ "type": "changeStat", "stat": "hp", "by": -2 }] }
+      },
+      "extraTexts": [{ "when": { "type": "won", "page": "wolf" }, "text": "Ten vlk už nikoho obtěžovat nebude." }],
+      "actions": [{ "id": "wolf-back", "label": "Vrátit se na stezku", "target": "forest" }],
+      "pos": { "x": 260, "y": 180 }
+    },
+    {
+      "id": "cave-mouth",
+      "title": "Jeskyně",
+      "image": "images/cave.svg",
+      "text": "Ve svahu se otvírá černá díra. Vane z ní studený vzduch a zápach kouře. Uvnitř je úplná tma.",
+      "actions": [
+        {
+          "id": "cave-torch",
+          "label": "Zapálit pochodeň a vejít",
+          "target": "tunnel",
+          "when": { "type": "hasItem", "item": "torch" }
+        },
+        {
+          "id": "cave-dark",
+          "label": "Šátrat dovnitř potmě",
+          "target": "tunnel",
+          "effects": [
+            {
+              "type": "chance",
+              "percent": 50,
+              "then": [
+                { "type": "message", "text": "Zakopneš o kámen a praštíš se do hlavy." },
+                { "type": "changeStat", "stat": "hp", "by": -3 }
+              ]
+            }
+          ]
+        },
+        { "id": "cave-back", "label": "Vrátit se do lesa", "target": "forest" }
+      ],
+      "pos": { "x": 0, "y": 360 }
+    },
+    {
+      "id": "tunnel",
+      "title": "Rozcestí",
+      "text": "Tunel se dělí na dvě části. Zprava slyšíš chrochtání a cinkání kovu. Levá chodba je tichá.",
+      "extraTexts": [
+        {
+          "when": { "type": "hasItem", "item": "torch" },
+          "text": "Ve světle pochodně vidíš na levé stěně vyškrábaný znak: panáček padá do díry."
+        }
+      ],
+      "actions": [
+        { "id": "tunnel-left", "label": "Jít doleva", "target": "pit" },
+        { "id": "tunnel-right", "label": "Jít doprava", "target": "guard" },
+        { "id": "tunnel-out", "label": "Opustit jeskyni", "target": "cave-mouth" }
+      ],
+      "pos": { "x": 0, "y": 540 }
+    },
+    {
+      "id": "pit",
+      "title": "Propast",
+      "text": "Podlaha končí na okraji hluboké propasti. Daleko dole se něco třpytí.",
+      "actions": [
+        {
+          "id": "pit-climb",
+          "label": "Slanit se dolů po laně",
+          "target": "pit-bottom",
+          "when": { "type": "hasItem", "item": "rope" },
+          "lockedHint": "Je to příliš hluboko, bez lana to nejde."
+        },
+        { "id": "pit-back", "label": "Vrátit se na rozcestí", "target": "tunnel" }
+      ],
+      "pos": { "x": -260, "y": 540 }
+    },
+    {
+      "id": "pit-bottom",
+      "title": "Dno propasti",
+      "image": "images/treasure.svg",
+      "text": "Stojíš mezi starými kostmi a rozbitými sudy. V rohu stojí železná truhla s těžkým zámkem.",
+      "onFirstVisit": [
+        { "type": "message", "text": "Po zemi se válejí mince." },
+        { "type": "changeCounter", "counter": "gold", "by": 10 }
+      ],
+      "extraTexts": [
+        {
+          "when": { "type": "or", "any": [{ "type": "did", "action": "chest-key" }, { "type": "did", "action": "chest-pick" }] },
+          "text": "Truhla stojí otevřená a prázdná."
+        }
+      ],
+      "actions": [
+        {
+          "id": "chest-key",
+          "label": "Otevřít truhlu rezavým klíčem",
+          "when": {
+            "type": "and",
+            "all": [{ "type": "hasItem", "item": "key" }, { "type": "not", "cond": { "type": "did", "action": "chest-pick" } }]
+          },
+          "once": true,
+          "effects": [
+            { "type": "takeItem", "item": "key" },
+            { "type": "giveItem", "item": "amulet" }
+          ]
+        },
+        {
+          "id": "chest-pick",
+          "label": "Vypáčit zámek",
+          "when": {
+            "type": "and",
+            "all": [
+              { "type": "profession", "profession": "thief" },
+              { "type": "not", "cond": { "type": "did", "action": "chest-key" } }
+            ]
+          },
+          "once": true,
+          "effects": [{ "type": "giveItem", "item": "amulet" }]
+        },
+        { "id": "pit-up", "label": "Vylézt zpátky nahoru", "target": "pit" }
+      ],
+      "pos": { "x": -520, "y": 540 }
+    },
+    {
+      "id": "guard",
+      "title": "Strážce",
+      "image": "images/goblin.svg",
+      "text": "U malého ohně sedí goblin s rezavým kopím. Když tě uvidí, vyskočí a začne křičet!",
+      "combat": {
+        "enemy": { "name": "Goblinský strážce", "image": "images/goblin.svg", "hp": 10, "attack": 3, "defense": 1 },
+        "onWin": { "effects": [{ "type": "changeCounter", "counter": "gold", "by": 3 }] },
+        "flee": { "target": "tunnel", "effects": [{ "type": "changeStat", "stat": "hp", "by": -2 }] }
+      },
+      "extraTexts": [{ "when": { "type": "won", "page": "guard" }, "text": "Strážce leží u ohně. Cesta hlouběji je volná." }],
+      "actions": [
+        { "id": "guard-on", "label": "Jít hlouběji do jeskyně", "target": "hall" },
+        { "id": "guard-back", "label": "Vrátit se na rozcestí", "target": "tunnel" }
+      ],
+      "pos": { "x": 260, "y": 540 }
+    },
+    {
+      "id": "hall",
+      "title": "Trůnní síň",
+      "text": "Nahlédneš do velké síně. Na trůnu z kostí chrápe Goblinský král a na hlavě mu sedí koruna z Dubnice.",
+      "actions": [
+        {
+          "id": "hall-sneak",
+          "label": "Připlížit se a vzít korunu",
+          "effects": [
+            {
+              "type": "if",
+              "when": { "type": "profession", "profession": "thief" },
+              "then": [
+                { "type": "message", "text": "Tvé prsty jsou lehké jako pírko. Král ani necukne." },
+                { "type": "giveItem", "item": "crown" },
+                { "type": "goto", "page": "victory" }
+              ]
+            },
+            {
+              "type": "chance",
+              "percent": 30,
+              "then": [
+                { "type": "message", "text": "Zadržíš dech... a povede se to!" },
+                { "type": "giveItem", "item": "crown" },
+                { "type": "goto", "page": "victory" }
+              ],
+              "else": [
+                { "type": "message", "text": "Pod nohou ti křupne kost. Král otevře oči!" },
+                { "type": "goto", "page": "king" }
+              ]
+            }
+          ]
+        },
+        { "id": "hall-fight", "label": "Vyzvat Goblinského krále", "target": "king" },
+        { "id": "hall-back", "label": "Tiše se vrátit", "target": "guard" }
+      ],
+      "pos": { "x": 260, "y": 720 }
+    },
+    {
+      "id": "king",
+      "title": "Goblinský král",
+      "image": "images/goblin.svg",
+      "text": "Goblinský král vstane z trůnu, je dvakrát větší než strážce, a zvedne obrovský kyj.",
+      "combat": {
+        "enemy": { "name": "Goblinský král", "image": "images/goblin.svg", "hp": 16, "attack": 4, "defense": 2 },
+        "onWin": { "effects": [{ "type": "giveItem", "item": "crown" }], "target": "victory" },
+        "onLose": { "target": "captured" }
+      },
+      "actions": [],
+      "pos": { "x": 520, "y": 720 }
+    },
+    {
+      "id": "victory",
+      "title": "Hrdina Dubnice",
+      "image": "images/village.svg",
+      "text": "Vyjdeš z jeskyně s korunou pod paží. Večer slaví celá vesnice a starosta ti tiskne ruku, až to bolí.",
+      "extraTexts": [
+        {
+          "when": { "type": "compare", "left": { "counter": "gold" }, "op": ">=", "right": 15 },
+          "text": "A za zlato z jeskyně si koupíš domek u návsi."
+        }
+      ],
+      "actions": [],
+      "ending": "victory",
+      "pos": { "x": 520, "y": 900 }
+    },
+    {
+      "id": "captured",
+      "title": "V kleci",
+      "text": "Probudíš se v kleci z kostí. Goblini tancují kolem ohně a král má na hlavě korunu a tvoje boty.\n\nMožná to zítra zkusí někdo jiný.",
+      "actions": [],
+      "ending": "defeat",
+      "pos": { "x": 780, "y": 720 }
+    }
+  ]
+}

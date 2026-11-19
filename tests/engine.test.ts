@@ -37,7 +37,7 @@ function fightToTheEnd(game: Game): 'win' | 'lose' {
 }
 
 test('sample stories have no problems', () => {
-  for (const name of ['goblin-cave', 'ztracena-stanice']) {
+  for (const name of ['goblin-cave', 'goblinska-jeskyne', 'ztracena-stanice']) {
     assert.deepEqual(validateStory(loadSample(name)), [], name);
   }
 });
@@ -289,7 +289,7 @@ test('a saved game continues exactly where it stopped, including the dice', () =
 });
 
 test('random play-throughs of the samples never crash or get stuck', () => {
-  for (const name of ['goblin-cave', 'ztracena-stanice']) {
+  for (const name of ['goblin-cave', 'goblinska-jeskyne', 'ztracena-stanice']) {
     const story = loadSample(name);
     const endings = new Set<string>();
     for (let seed = 1; seed <= 300; seed++) {
