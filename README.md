@@ -35,6 +35,20 @@ Then open:
 In the editor, "Start from an example" copies one of the sample adventures so there is
 something to look at straight away.
 
+### Where the editor's work is stored
+
+The editor saves projects in the browser's own storage (IndexedDB), not in project files.
+They are kept separately for each browser and each address, so `localhost:5173` and
+`localhost:5174` have different projects, and clearing the site's data removes them. Editing
+never changes anything in `public/`.
+
+To take a project out, use "Save as a file" (⬇) in the editor to get a ZIP or a single HTML
+file. To turn it into a bundled sample, unpack the ZIP into `public/adventures/<name>/` and
+list it in `public/adventures/index.json`.
+
+`public/` is the source of the bundled adventures. `dist/` is only the output of
+`npm run build` (a copy of `public/` plus the built code) and is not kept in git.
+
 ## Commands
 
 | Command | What it does |
