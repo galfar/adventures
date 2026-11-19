@@ -175,7 +175,7 @@
       "text": "The tunnel splits in two. From the right you hear grunting and the clink of metal. The left tunnel is silent.",
       "extraTexts": [
         {
-          "when": { "type": "hasItem", "item": "torch" },
+          "when": { "type": "did", "action": "cave-torch" },
           "text": "In the light of your torch you see a sign scratched into the left wall: a stick figure falling into a hole."
         }
       ],

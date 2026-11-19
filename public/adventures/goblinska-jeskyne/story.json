@@ -175,7 +175,7 @@
       "text": "Tunel se dělí na dvě části. Zprava slyšíš chrochtání a cinkání kovu. Levá chodba je tichá.",
       "extraTexts": [
         {
-          "when": { "type": "hasItem", "item": "torch" },
+          "when": { "type": "did", "action": "cave-torch" },
           "text": "Ve světle pochodně vidíš na levé stěně vyškrábaný znak: panáček padá do díry."
         }
       ],
