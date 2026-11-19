@@ -29,8 +29,11 @@ export interface SetupChoice {
 /** Everything the player needs to draw the current moment of the game. */
 export interface GameView {
   page: Page;
-  /** `deadEnd`: a page with nothing to do that the author did not mark as an ending. */
-  status: 'playing' | 'combat' | 'ending' | 'deadEnd' | 'dead';
+  /**
+   * `deadEnd`: a page with nothing to do that the author did not mark as an ending.
+   * `moving`: the result of a choice is shown; `moveOn()` goes to the next page.
+   */
+  status: 'playing' | 'combat' | 'moving' | 'ending' | 'deadEnd' | 'dead';
   /** The page text followed by the extra texts whose condition holds. */
   texts: string[];
   actions: ActionView[];
@@ -129,6 +132,8 @@ export class Game {
     ) {
       return false;
     }
+    // A page that was deleted from the story since the save: stay where the hero is.
+    if (saved.moveTo !== undefined && !this.index.pages.has(saved.moveTo)) delete saved.moveTo;
     this.state = saved;
     return true;
   }
@@ -138,10 +143,19 @@ export class Game {
   /** The player picked an action on the current page. */
   act(actionId: ActionId): boolean {
     const action = this.page().actions.find((a) => a.id === actionId);
-    if (!action || this.state.combat || !this.isAvailable(action) || !this.begin()) return false;
+    if (!action || this.state.combat || this.state.moveTo !== undefined || !this.isAvailable(action) || !this.begin()) return false;
     this.state.done[action.id] = (this.state.done[action.id] ?? 0) + 1;
     this.emit({ kind: 'action', action: action.id });
     this.leaveTo(this.runEffects(action.effects) ?? action.target);
+    return true;
+  }
+
+  /** After the result of a choice was shown on its page: goes on to the next page. */
+  moveOn(): boolean {
+    const target = this.state.moveTo;
+    if (target === undefined || !this.begin()) return false;
+    this.state.moveTo = undefined;
+    this.enterPage(target);
     return true;
   }
 
@@ -220,7 +234,7 @@ export class Game {
     const texts = [page.text, ...(page.extraTexts ?? []).filter((t) => test(t.when, state, index)).map((t) => t.text)];
 
     const actions: ActionView[] = [];
-    if (!state.combat && !state.over) {
+    if (!state.combat && !state.over && state.moveTo === undefined) {
       for (const action of page.actions) {
         if (action.once && state.done[action.id]) continue;
         if (test(action.when, state, index)) actions.push({ id: action.id, label: action.label, enabled: true });
@@ -233,6 +247,7 @@ export class Game {
     let status: GameView['status'];
     if (state.over) status = 'dead';
     else if (state.combat) status = 'combat';
+    else if (state.moveTo !== undefined) status = 'moving';
     else if (page.ending) status = 'ending';
     else status = actions.some((a) => a.enabled) ? 'playing' : 'deadEnd';
 
@@ -295,7 +310,7 @@ export class Game {
 
   private isUsable(def: ItemDef): boolean {
     const { state } = this;
-    return !!def.use && (state.items[def.id] ?? 0) > 0 && !state.over && !state.combat?.outcome;
+    return !!def.use && (state.items[def.id] ?? 0) > 0 && !state.over && !state.combat?.outcome && state.moveTo === undefined;
   }
 
   private rollDie(): number {
@@ -304,10 +319,16 @@ export class Game {
     return 1 + Math.floor(value * DIE_SIDES);
   }
 
-  /** After a command's effects: the hero may have died, or moves on to another page. */
+  /**
+   * After a command's effects: the hero may have died, or moves on to another page.
+   * When the effects told the player something ("You hold your breath... and it
+   * works!"), the move waits for `moveOn()`, so that text is read on this page.
+   */
   private leaveTo(target: PageId | undefined): void {
     if (this.checkDeath()) return;
-    if (target !== undefined) this.enterPage(target);
+    if (target === undefined) return;
+    if (this.state.notices.some((n) => n.kind === 'message')) this.state.moveTo = target;
+    else this.enterPage(target);
   }
 
   private checkDeath(): boolean {

@@ -151,6 +151,46 @@ test('goto, if and chance effects choose the next page', () => {
   assert.equal(game.state.pageId, 'b');
 });
 
+test('a choice that says something waits on its page before moving on', () => {
+  const story = miniStory([
+    {
+      id: 'a',
+      text: 'A',
+      actions: [
+        { id: 'sneak', label: 'Sneak', effects: [{ type: 'message', text: 'It works!' }, { type: 'giveItem', item: 'key' }, { type: 'goto', page: 'b' }] },
+        { id: 'walk', label: 'Walk', target: 'b', effects: [{ type: 'giveItem', item: 'key' }] },
+      ],
+    },
+    { id: 'b', text: 'B', onFirstVisit: [{ type: 'message', text: 'Welcome' }], actions: [], ending: 'victory' },
+  ]);
+  const game = new Game(story);
+  game.start();
+  game.act('sneak');
+  let view = game.view();
+  assert.equal(view.page.id, 'a', 'the result is shown where it happened');
+  assert.equal(view.status, 'moving');
+  assert.deepEqual(view.actions, []);
+  assert.deepEqual(view.notices, [{ kind: 'message', text: 'It works!' }, { kind: 'itemGained', item: 'key', count: 1 }]);
+  assert.equal(game.act('walk'), false, 'no other choice while waiting');
+  assert.equal(game.useItem('potion'), false);
+
+  // Waiting survives saving and loading.
+  const continued = new Game(story);
+  assert.equal(continued.restore(JSON.parse(JSON.stringify(game.state)) as GameState), true);
+  assert.equal(continued.moveOn(), true);
+  view = continued.view();
+  assert.equal(view.page.id, 'b');
+  assert.equal(view.status, 'ending');
+  assert.deepEqual(view.notices, [{ kind: 'message', text: 'Welcome' }], 'old results are gone, the new page has its own');
+  assert.equal(continued.moveOn(), false);
+
+  // Without anything to read, a choice moves on at once.
+  const quick = new Game(story);
+  quick.start();
+  quick.act('walk');
+  assert.equal(quick.view().page.id, 'b');
+});
+
 test('a blow is roll + attack - defense, and a six always hurts', () => {
   assert.equal(strike(4, 3, 1).damage, 6);
   assert.equal(strike(2, 1, 9).damage, 0);
@@ -311,7 +351,9 @@ test('random play-throughs of the samples never crash or get stuck', () => {
           break;
         }
         assert.notEqual(view.status, 'deadEnd', `${name}: stuck on page ${view.page.id}`);
-        if (view.status === 'combat') {
+        if (view.status === 'moving') {
+          game.moveOn();
+        } else if (view.status === 'combat') {
           if (view.combat!.outcome) game.finishCombat();
           else if (view.combat!.canFlee && pick([0, 1, 2, 3, 4]) === 0) game.flee();
           else game.fightRound();

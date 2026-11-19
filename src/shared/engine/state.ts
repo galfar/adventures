@@ -22,6 +22,12 @@ export interface GameState {
   /** Pages whose fight was won. */
   won: Record<PageId, boolean>;
   pageId: PageId;
+  /**
+   * Where the hero goes next, once the player has read what just happened ("continue").
+   * Set when a choice told the player something and then leads to another page, so
+   * the result shows on the page where it happened, not on the next one.
+   */
+  moveTo?: PageId;
   /** Present while a fight is going on. */
   combat?: CombatState;
   over?: 'dead';

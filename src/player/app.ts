@@ -209,7 +209,13 @@ export class PlayerApp {
         h('div', { class: 'page-text lead' }, view.texts.flatMap(renderText)),
         view.notices.length > 0 && h('ul', { class: 'notices' }, view.notices.map((n) => this.notice(n))),
         view.combat && this.combat(view, view.combat),
-        view.status === 'playing' && h('div', { class: 'divider' }),
+        (view.status === 'playing' || view.status === 'moving') && h('div', { class: 'divider' }),
+        view.status === 'moving' &&
+          h(
+            'nav',
+            { class: 'actions' },
+            h('button', { class: 'action primary', onclick: () => this.run(() => this.game.moveOn()) }, `${this.t('next')} ➜`),
+          ),
         view.actions.length > 0 &&
           h(
             'nav',
