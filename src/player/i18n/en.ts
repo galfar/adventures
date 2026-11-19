@@ -4,6 +4,8 @@ export const en = {
   libraryTitle: 'Adventures',
   libraryIntro: 'Choose an adventure to play.',
   openFile: 'Open an adventure file (.zip)',
+  /** The button that switches the library to the other language, so it is written in that one. */
+  switchLanguage: 'Česky',
   loading: 'Loading…',
   loadError: 'The adventure could not be loaded.',
 

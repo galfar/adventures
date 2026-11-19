@@ -96,7 +96,7 @@
         },
         { "id": "shop-leave", "label": "Vrátit se na náves", "target": "village" }
       ],
-      "pos": { "x": -260, "y": 0 }
+      "pos": { "x": -340, "y": 0 }
     },
     {
       "id": "forest",
@@ -118,7 +118,7 @@
         },
         { "id": "forest-village", "label": "Vrátit se do vesnice", "target": "village" }
       ],
-      "pos": { "x": 0, "y": 180 }
+      "pos": { "x": 0, "y": 220 }
     },
     {
       "id": "wolf",
@@ -136,7 +136,7 @@
       },
       "extraTexts": [{ "when": { "type": "won", "page": "wolf" }, "text": "Ten vlk už nikoho obtěžovat nebude." }],
       "actions": [{ "id": "wolf-back", "label": "Vrátit se na stezku", "target": "forest" }],
-      "pos": { "x": 260, "y": 180 }
+      "pos": { "x": 340, "y": 220 }
     },
     {
       "id": "cave-mouth",
@@ -167,7 +167,7 @@
         },
         { "id": "cave-back", "label": "Vrátit se do lesa", "target": "forest" }
       ],
-      "pos": { "x": 0, "y": 360 }
+      "pos": { "x": 0, "y": 440 }
     },
     {
       "id": "tunnel",
@@ -184,7 +184,7 @@
         { "id": "tunnel-right", "label": "Jít doprava", "target": "guard" },
         { "id": "tunnel-out", "label": "Opustit jeskyni", "target": "cave-mouth" }
       ],
-      "pos": { "x": 0, "y": 540 }
+      "pos": { "x": 0, "y": 660 }
     },
     {
       "id": "pit",
@@ -200,7 +200,7 @@
         },
         { "id": "pit-back", "label": "Vrátit se na rozcestí", "target": "tunnel" }
       ],
-      "pos": { "x": -260, "y": 540 }
+      "pos": { "x": -340, "y": 660 }
     },
     {
       "id": "pit-bottom",
@@ -246,7 +246,7 @@
         },
         { "id": "pit-up", "label": "Vylézt zpátky nahoru", "target": "pit" }
       ],
-      "pos": { "x": -520, "y": 540 }
+      "pos": { "x": -680, "y": 660 }
     },
     {
       "id": "guard",
@@ -263,7 +263,7 @@
         { "id": "guard-on", "label": "Jít hlouběji do jeskyně", "target": "hall" },
         { "id": "guard-back", "label": "Vrátit se na rozcestí", "target": "tunnel" }
       ],
-      "pos": { "x": 260, "y": 540 }
+      "pos": { "x": 340, "y": 660 }
     },
     {
       "id": "hall",
@@ -301,7 +301,7 @@
         { "id": "hall-fight", "label": "Vyzvat Goblinského krále", "target": "king" },
         { "id": "hall-back", "label": "Tiše se vrátit", "target": "guard" }
       ],
-      "pos": { "x": 260, "y": 720 }
+      "pos": { "x": 340, "y": 880 }
     },
     {
       "id": "king",
@@ -314,7 +314,7 @@
         "onLose": { "target": "captured" }
       },
       "actions": [],
-      "pos": { "x": 520, "y": 720 }
+      "pos": { "x": 680, "y": 880 }
     },
     {
       "id": "victory",
@@ -329,7 +329,7 @@
       ],
       "actions": [],
       "ending": "victory",
-      "pos": { "x": 520, "y": 900 }
+      "pos": { "x": 680, "y": 1100 }
     },
     {
       "id": "captured",
@@ -337,7 +337,7 @@
       "text": "Probudíš se v kleci z kostí. Goblini tancují kolem ohně a král má na hlavě korunu a tvoje boty.\n\nMožná to zítra zkusí někdo jiný.",
       "actions": [],
       "ending": "defeat",
-      "pos": { "x": 780, "y": 720 }
+      "pos": { "x": 1020, "y": 880 }
     }
   ]
 }

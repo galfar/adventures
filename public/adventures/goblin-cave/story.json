@@ -96,7 +96,7 @@
         },
         { "id": "shop-leave", "label": "Go back to the square", "target": "village" }
       ],
-      "pos": { "x": -260, "y": 0 }
+      "pos": { "x": -340, "y": 0 }
     },
     {
       "id": "forest",
@@ -118,7 +118,7 @@
         },
         { "id": "forest-village", "label": "Return to the village", "target": "village" }
       ],
-      "pos": { "x": 0, "y": 180 }
+      "pos": { "x": 0, "y": 220 }
     },
     {
       "id": "wolf",
@@ -136,7 +136,7 @@
       },
       "extraTexts": [{ "when": { "type": "won", "page": "wolf" }, "text": "The wolf will not bother anybody again." }],
       "actions": [{ "id": "wolf-back", "label": "Go back to the path", "target": "forest" }],
-      "pos": { "x": 260, "y": 180 }
+      "pos": { "x": 340, "y": 220 }
     },
     {
       "id": "cave-mouth",
@@ -167,7 +167,7 @@
         },
         { "id": "cave-back", "label": "Go back to the forest", "target": "forest" }
       ],
-      "pos": { "x": 0, "y": 360 }
+      "pos": { "x": 0, "y": 440 }
     },
     {
       "id": "tunnel",
@@ -184,7 +184,7 @@
         { "id": "tunnel-right", "label": "Go right", "target": "guard" },
         { "id": "tunnel-out", "label": "Leave the cave", "target": "cave-mouth" }
       ],
-      "pos": { "x": 0, "y": 540 }
+      "pos": { "x": 0, "y": 660 }
     },
     {
       "id": "pit",
@@ -200,7 +200,7 @@
         },
         { "id": "pit-back", "label": "Go back to the fork", "target": "tunnel" }
       ],
-      "pos": { "x": -260, "y": 540 }
+      "pos": { "x": -340, "y": 660 }
     },
     {
       "id": "pit-bottom",
@@ -246,7 +246,7 @@
         },
         { "id": "pit-up", "label": "Climb back up", "target": "pit" }
       ],
-      "pos": { "x": -520, "y": 540 }
+      "pos": { "x": -680, "y": 660 }
     },
     {
       "id": "guard",
@@ -263,7 +263,7 @@
         { "id": "guard-on", "label": "Go deeper into the cave", "target": "hall" },
         { "id": "guard-back", "label": "Go back to the fork", "target": "tunnel" }
       ],
-      "pos": { "x": 260, "y": 540 }
+      "pos": { "x": 340, "y": 660 }
     },
     {
       "id": "hall",
@@ -301,7 +301,7 @@
         { "id": "hall-fight", "label": "Challenge the Goblin King", "target": "king" },
         { "id": "hall-back", "label": "Go back quietly", "target": "guard" }
       ],
-      "pos": { "x": 260, "y": 720 }
+      "pos": { "x": 340, "y": 880 }
     },
     {
       "id": "king",
@@ -314,7 +314,7 @@
         "onLose": { "target": "captured" }
       },
       "actions": [],
-      "pos": { "x": 520, "y": 720 }
+      "pos": { "x": 680, "y": 880 }
     },
     {
       "id": "victory",
@@ -329,7 +329,7 @@
       ],
       "actions": [],
       "ending": "victory",
-      "pos": { "x": 520, "y": 900 }
+      "pos": { "x": 680, "y": 1100 }
     },
     {
       "id": "captured",
@@ -337,7 +337,7 @@
       "text": "You wake up in a cage of bones. The goblins dance around the fire and the king wears the crown and your boots.\n\nMaybe somebody else will try tomorrow.",
       "actions": [],
       "ending": "defeat",
-      "pos": { "x": 780, "y": 720 }
+      "pos": { "x": 1020, "y": 880 }
     }
   ]
 }

@@ -1,6 +1,6 @@
 import { PlayerApp } from './app.ts';
 import { h } from '../shared/dom.ts';
-import { translator } from './i18n/index.ts';
+import { libraryLanguage, setLibraryLanguage, translator } from './i18n/index.ts';
 import { loadEmbedded, loadFromProject, loadFromUrl, loadFromZip, type StoryPackage } from './loader.ts';
 import { applyTheme } from './themes.ts';
 
@@ -15,12 +15,14 @@ import { applyTheme } from './themes.ts';
 
 const root = document.getElementById('app')!;
 const params = new URLSearchParams(location.search);
-const t = translator(navigator.language);
+let language = libraryLanguage();
+let t = translator(language);
 
 interface LibraryEntry {
   path: string;
   title: string;
   description?: string;
+  language?: string;
 }
 
 function play(pkg: StoryPackage, fromLibrary: boolean, preview = false): void {
@@ -34,6 +36,7 @@ function play(pkg: StoryPackage, fromLibrary: boolean, preview = false): void {
 async function showLibrary(error?: string): Promise<void> {
   applyTheme(params.get('theme') ?? undefined);
   document.title = t('libraryTitle');
+  document.documentElement.lang = language;
   let entries: LibraryEntry[] = [];
   try {
     const response = await fetch('adventures/index.json');
@@ -41,6 +44,8 @@ async function showLibrary(error?: string): Promise<void> {
   } catch {
     // No bundled adventures: the library only offers opening a file.
   }
+  // Adventures in the reader's language come first; the others are still there.
+  entries.sort((a, b) => Number(b.language === language) - Number(a.language === language));
 
   const status = h('p', { class: 'error', role: 'alert' }, error ?? '');
   const fileInput = h('input', {
@@ -85,7 +90,25 @@ async function showLibrary(error?: string): Promise<void> {
         ),
         h('div', { class: 'divider' }),
         status,
-        h('nav', { class: 'actions' }, h('button', { class: 'action', onclick: () => fileInput.click() }, t('openFile'))),
+        h(
+          'nav',
+          { class: 'actions' },
+          h('button', { class: 'action', onclick: () => fileInput.click() }, t('openFile')),
+          h(
+            'button',
+            {
+              class: 'action',
+              lang: language === 'cs' ? 'en' : 'cs',
+              onclick: () => {
+                language = language === 'cs' ? 'en' : 'cs';
+                setLibraryLanguage(language);
+                t = translator(language);
+                void showLibrary();
+              },
+            },
+            `🌐 ${t('switchLanguage')}`,
+          ),
+        ),
         fileInput,
       ),
     ),

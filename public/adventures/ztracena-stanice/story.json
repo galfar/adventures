@@ -45,7 +45,7 @@
         { "type": "giveItem", "item": "karta" }
       ],
       "actions": [{ "id": "sklad-zpet", "label": "Vrátit se do doku", "target": "dok" }],
-      "pos": { "x": -260, "y": 0 }
+      "pos": { "x": -340, "y": 0 }
     },
     {
       "id": "chodba",
@@ -61,7 +61,7 @@
         },
         { "id": "chodba-zpet", "label": "Vrátit se do doku", "target": "dok" }
       ],
-      "pos": { "x": 0, "y": 180 }
+      "pos": { "x": 0, "y": 220 }
     },
     {
       "id": "robot",
@@ -73,7 +73,7 @@
         "flee": { "target": "dok", "effects": [{ "type": "changeStat", "stat": "hp", "by": -2 }] }
       },
       "actions": [],
-      "pos": { "x": 0, "y": 360 }
+      "pos": { "x": 0, "y": 440 }
     },
     {
       "id": "konec",
@@ -81,7 +81,7 @@
       "text": "Robot se s rachotem sesune k zemi. Zapínáš hlavní počítač a na obrazovce naskočí zpráva: „Posádka je v bezpečí v záchranných modulech. Děkujeme za restart.“\n\nMise splněna.",
       "actions": [],
       "ending": "victory",
-      "pos": { "x": 0, "y": 540 }
+      "pos": { "x": 0, "y": 660 }
     }
   ]
 }

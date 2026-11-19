@@ -244,7 +244,8 @@ browsing), the game still plays and only continuing later is lost.
 
 Interface texts live in [src/player/i18n/en.ts](../src/player/i18n/en.ts) and `cs.ts`. The
 player uses the story's `language`, so a Czech story gets Czech buttons. The library uses the
-browser's language. Adding a language is one new file and one line in `i18n/index.ts`.
+browser's language until the reader picks one with its language button; the choice is
+remembered in the browser, and adventures in that language are listed first. Adding a language is one new file and one line in `i18n/index.ts`.
 
 ### Phones
 

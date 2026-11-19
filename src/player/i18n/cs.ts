@@ -5,6 +5,7 @@ export const cs: Messages = {
   libraryTitle: 'Dobrodružství',
   libraryIntro: 'Vyber si dobrodružství, které chceš hrát.',
   openFile: 'Otevřít soubor s dobrodružstvím (.zip)',
+  switchLanguage: 'English',
   loading: 'Načítám…',
   loadError: 'Dobrodružství se nepodařilo načíst.',
 
