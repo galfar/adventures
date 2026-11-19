@@ -26,9 +26,9 @@ export interface RuleTarget {
   mergeKey: string;
 }
 
-/** One dialog element is reused for every rule: Blockly attaches its menus to it once. */
+/** One dialog element is reused for every rule. */
 let host: HTMLDialogElement | undefined;
-/** The part of the dialog that is rebuilt for each rule. Blockly's own menu elements sit next to it and must stay. */
+/** The part of the dialog that is rebuilt for each rule. */
 const content = h('div', { class: 'rules-content' });
 
 function buildLists(ctx: EditorContext, rule: Rule): Lists {
@@ -212,8 +212,9 @@ export async function openRules(ctx: EditorContext, target: RuleTarget): Promise
   if (!host) {
     host = h('dialog', { class: 'rules-dialog' }, content);
     document.body.append(host);
-    // Blockly's drop-down menus must live inside the dialog, or they open behind it.
-    B.setParentContainer(host);
+    // Blockly puts its drop-down menus inside the block area, so they are in the dialog
+    // and show above it. Do not move them elsewhere (setParentContainer): Blockly then
+    // thinks focus left the blocks and closes each menu the moment it opens.
   }
   const dialog = host;
   const area = h('div', { class: 'rules-blocks' });
