@@ -17,7 +17,7 @@ import type {
 } from '../format/types.ts';
 import { buildIndex, effectiveStat, test, type StoryIndex } from './conditions.ts';
 import { DIE_SIDES, nextRandom, strike } from './rules.ts';
-import { isNotice, STATE_VERSION, type GameEvent, type GameState, type Notice, type RoundLog } from './state.ts';
+import { isNotice, LOG_LIMIT, STATE_VERSION, type GameEvent, type GameState, type LogEntry, type Notice, type RoundLog } from './state.ts';
 
 /** What the player chose on the "create your hero" screen. */
 export interface SetupChoice {
@@ -41,7 +41,10 @@ export interface GameView {
   hero: HeroView;
   items: ItemView[];
   counters: { def: CounterDef; value: number }[];
+  /** What the last command caused. */
   notices: Notice[];
+  /** Everything that happened on this page so far, oldest first (includes `notices`). */
+  log: LogEntry[];
 }
 
 export interface ActionView {
@@ -89,6 +92,8 @@ export class Game {
   state!: GameState;
   /** Called for everything that happens; meant for things like sound effects. */
   onEvent: ((event: GameEvent) => void) | undefined;
+  /** Whether the current command entered a page (so its choice is not the hero's line there). */
+  private entered = false;
 
   constructor(story: Story) {
     this.story = story;
@@ -113,6 +118,7 @@ export class Game {
       pageId: story.startPage,
       rng: seed,
       notices: [],
+      log: [],
     };
     for (const grant of kit.items ?? []) this.changeItem(grant.item, grant.count ?? 1, true);
     if (kit.choose) {
@@ -120,6 +126,7 @@ export class Game {
       for (const id of new Set(picked.slice(0, kit.choose.count))) this.changeItem(id, 1, true);
     }
     this.enterPage(story.startPage);
+    this.record();
   }
 
   /** Continues a saved game. Returns false when the save does not fit this story. */
@@ -147,6 +154,7 @@ export class Game {
     this.state.done[action.id] = (this.state.done[action.id] ?? 0) + 1;
     this.emit({ kind: 'action', action: action.id });
     this.leaveTo(this.runEffects(action.effects) ?? action.target);
+    this.record(action.label);
     return true;
   }
 
@@ -156,6 +164,7 @@ export class Game {
     if (target === undefined || !this.begin()) return false;
     this.state.moveTo = undefined;
     this.enterPage(target);
+    this.record();
     return true;
   }
 
@@ -199,6 +208,7 @@ export class Game {
       if (def.onLose?.target !== undefined) this.state.stats.hp = 1;
       this.leaveTo(this.runEffects(def.onLose?.effects) ?? def.onLose?.target);
     }
+    this.record();
     return true;
   }
 
@@ -211,6 +221,7 @@ export class Game {
     this.state.combat = undefined;
     this.emit({ kind: 'combatEnd', page: page.id, outcome: 'fled' });
     this.leaveTo(this.runEffects(flee.effects) ?? flee.target);
+    this.record();
     return true;
   }
 
@@ -223,6 +234,7 @@ export class Game {
     const jump = this.runEffects(def.use!.effects);
     // A fight cannot be escaped by an item that jumps to another page.
     this.leaveTo(this.state.combat ? undefined : jump);
+    this.record();
     return true;
   }
 
@@ -283,6 +295,8 @@ export class Game {
       items,
       counters: this.story.counters.map((def) => ({ def, value: state.counters[def.id] ?? def.start })),
       notices: state.notices,
+      // Saves from before the log existed still show what the last command did.
+      log: state.log ?? (state.notices.length > 0 ? [{ notices: state.notices }] : []),
     };
   }
 
@@ -296,7 +310,20 @@ export class Game {
   private begin(): boolean {
     if (this.state.over) return false;
     this.state.notices = [];
+    this.entered = false;
     return true;
+  }
+
+  /**
+   * Adds what the command caused to the page's log. The picked choice is the hero's
+   * line, but only when the hero is still on the page where it was picked.
+   */
+  private record(choice?: string): void {
+    const state = this.state;
+    if (state.notices.length === 0) return;
+    const log = (state.log ??= []);
+    log.push({ choice: this.entered ? undefined : choice, notices: [...state.notices] });
+    if (log.length > LOG_LIMIT) log.splice(0, log.length - LOG_LIMIT);
   }
 
   private emit(event: GameEvent): void {
@@ -351,6 +378,9 @@ export class Game {
       }
       state.pageId = page.id;
       state.combat = undefined;
+      // A new page (or a new visit) starts with an empty log.
+      state.log = [];
+      this.entered = true;
       const visits = (state.visits[page.id] ?? 0) + 1;
       state.visits[page.id] = visits;
       this.emit({ kind: 'pageEnter', page: page.id });

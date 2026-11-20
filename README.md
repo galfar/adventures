@@ -49,6 +49,31 @@ list it in `public/adventures/index.json`.
 `public/` is the source of the bundled adventures. `dist/` is only the output of
 `npm run build` (a copy of `public/` plus the built code) and is not kept in git.
 
+### Writing a conversation
+
+A talk with a character fits on one page. While the hero stays on a page, everything that
+happens there stays listed under the text, and each picked choice shows as the hero's line
+("➤ Who are you?"). The list starts empty on every page.
+
+- Each thing the hero can say is a choice with no target ("stays on this page").
+- The character's answer is a "say" block. Put the name in front: `Grub: Five gold.`
+- "This choice can be used only once" stops a question from being asked twice.
+- "already picked" unlocks the next question after the previous one.
+- The last line can lead to another page. The answer then shows first, with "Continue ➜".
+
+In the editor's text view (`</>`) the trader in the Goblin Cave sample looks like this:
+
+```
+# "Have you seen the goblins?"   (only once)
+when picked:
+    say("Trader: Seen them? They stole my best lamp! ...")
+
+# "Anything else I should know?"   (only once)
+available if did("The trader: Have you seen the goblins?")
+when picked:
+    say("Trader: The king sleeps like a log. ...")
+```
+
 ## Commands
 
 | Command | What it does |

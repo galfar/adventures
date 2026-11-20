@@ -94,6 +94,23 @@
             { "type": "giveItem", "item": "potion" }
           ]
         },
+        {
+          "id": "shop-ask",
+          "label": "Viděl jste ty gobliny?",
+          "once": true,
+          "effects": [
+            { "type": "message", "text": "Obchodník: Jestli jsem je viděl? Ukradli mi nejlepší lampu! Bydlí v jeskyni nahoře v pahorcích." }
+          ]
+        },
+        {
+          "id": "shop-ask-more",
+          "label": "Je ještě něco, co bych měl vědět?",
+          "when": { "type": "did", "action": "shop-ask" },
+          "once": true,
+          "effects": [
+            { "type": "message", "text": "Obchodník: Král spí jako dřevo. Tichý zloděj by mu tu korunu sundal přímo z hlavy." }
+          ]
+        },
         { "id": "shop-leave", "label": "Vrátit se na náves", "target": "village" }
       ],
       "pos": { "x": -340, "y": 0 }

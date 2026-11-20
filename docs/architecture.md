@@ -78,7 +78,7 @@ is fetched only when the block editor is first opened.
 | Command | What it does |
 |---|---|
 | `npm run dev` | player at http://localhost:5173, editor at http://localhost:5173/editor.html |
-| `npm test` | engine, ZIP, editor and block-conversion tests (40 tests) |
+| `npm test` | engine, ZIP, editor and block-conversion tests (41 tests) |
 | `npm run template` | rebuild `public/player-template.html` (also run by `dev` and `build`) |
 | `npm run build` | type-check, then build the static site into `dist/` |
 
@@ -155,6 +155,12 @@ the data as
   "Continue ➜". So "You hold your breath... and it works!" stays on the throne hall instead of
   appearing under the next page's text. Choices without a message move on at once. Effects of
   arriving at a page (`onFirstVisit` / `onEveryVisit`) do not wait.
+- **The page's log** (`state.log`, `view.log`) keeps everything that happened on the current
+  page, oldest first: one entry per command, with its notices and, when the hero stayed on the
+  page, the picked choice's text as the hero's line. This makes conversations work on one page
+  (choices that stay, "only once", "already picked"; speaker names are typed into the "say"
+  text). Entering a page empties it; it keeps at most 30 entries. `view.notices` is still only
+  the last command. Saves from before the log show their last notices.
 - **`view()`** returns everything a screen needs to draw the current moment: the texts, the
   available actions, the fight, the hero, the bag, the counters, and the notices
   ("You got: Rusty key").
@@ -204,7 +210,7 @@ warning. The editor will show these in the author's language and jump to the pla
 
 `npm test` covers professions and starting items, movement, conditions, locked and one-time
 actions, `goto` / `if` / `chance`, the fight formula, winning, losing, fleeing, items, death,
-broken links, save and continue, waiting with "Continue" after a message, and 300 random play-throughs of each sample adventure that must
+broken links, save and continue, waiting with "Continue" after a message, the page's log, and 300 random play-throughs of each sample adventure that must
 all reach an ending without getting stuck.
 
 ## 4. Player (built)
@@ -231,7 +237,7 @@ allows cross-origin requests (CORS).
 - **Hero creation**: pick a profession, pick the starting items. Skipped when the story has
   neither.
 - **Game**: status bar (hit points, attack, defense, visible counters, bag), the picture, the
-  text, notices, then either the fight, the choices, or "Continue ➜" after a result. Endings and death show a closing block
+  text, the page's log (what happened here, with "➤" lines for the picked choices), then either the fight, the choices, or "Continue ➜" after a result. Endings and death show a closing block
   with "Play again".
 - **Bag**: items with descriptions and bonuses, and "Use" for usable items.
 - **Menu**: start again, back to the title page, other adventures.

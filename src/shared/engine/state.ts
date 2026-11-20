@@ -35,7 +35,22 @@ export interface GameState {
   rng: number;
   /** What happened during the last command, for the player to show ("You got: Key"). */
   notices: Notice[];
+  /**
+   * Everything that happened on the current page, oldest first, so a conversation stays
+   * readable. Starts empty on every page. Missing in saves from older versions.
+   */
+  log?: LogEntry[];
 }
+
+/** One command on the current page: the choice the player picked (if any) and what it caused. */
+export interface LogEntry {
+  /** The text of the picked choice, shown as the hero's line. Only when the hero stayed. */
+  choice?: string;
+  notices: Notice[];
+}
+
+/** A page's log keeps this many entries, so a choice repeated forever cannot grow a save. */
+export const LOG_LIMIT = 30;
 
 export interface CombatState {
   enemyHp: number;

@@ -94,6 +94,23 @@
             { "type": "giveItem", "item": "potion" }
           ]
         },
+        {
+          "id": "shop-ask",
+          "label": "Have you seen the goblins?",
+          "once": true,
+          "effects": [
+            { "type": "message", "text": "Trader: Seen them? They stole my best lamp! They live in the cave up in the hills." }
+          ]
+        },
+        {
+          "id": "shop-ask-more",
+          "label": "Anything else I should know?",
+          "when": { "type": "did", "action": "shop-ask" },
+          "once": true,
+          "effects": [
+            { "type": "message", "text": "Trader: The king sleeps like a log. A quiet thief could lift the crown right off his head." }
+          ]
+        },
         { "id": "shop-leave", "label": "Go back to the square", "target": "village" }
       ],
       "pos": { "x": -340, "y": 0 }

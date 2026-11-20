@@ -191,6 +191,50 @@ test('a choice that says something waits on its page before moving on', () => {
   assert.equal(quick.view().page.id, 'b');
 });
 
+test('a conversation stays on the page, with the picked choices as the hero\'s lines', () => {
+  const story = miniStory([
+    {
+      id: 'a',
+      text: 'A goblin',
+      actions: [
+        { id: 'who', label: 'Who are you?', once: true, effects: [{ type: 'message', text: 'Grub: I am Grub.' }] },
+        { id: 'wait', label: 'Wait', effects: [{ type: 'message', text: 'Grub yawns.' }] },
+        { id: 'pay', label: 'Pay', target: 'b', effects: [{ type: 'giveItem', item: 'key' }] },
+      ],
+    },
+    { id: 'b', text: 'B', onFirstVisit: [{ type: 'message', text: 'Welcome' }], actions: [{ id: 'back', label: 'Back', target: 'a' }] },
+  ]);
+  const game = new Game(story);
+  game.start();
+  assert.deepEqual(game.view().log, []);
+  game.act('who');
+  game.act('wait');
+  assert.deepEqual(game.view().log, [
+    { choice: 'Who are you?', notices: [{ kind: 'message', text: 'Grub: I am Grub.' }] },
+    { choice: 'Wait', notices: [{ kind: 'message', text: 'Grub yawns.' }] },
+  ]);
+  assert.deepEqual(game.view().notices, [{ kind: 'message', text: 'Grub yawns.' }], 'notices are only the last command');
+
+  // Moving on: a fresh log, without the choice as a line (it was picked on another page).
+  game.act('pay');
+  assert.deepEqual(game.view().log, [
+    { choice: undefined, notices: [{ kind: 'itemGained', item: 'key', count: 1 }, { kind: 'message', text: 'Welcome' }] },
+  ]);
+  game.act('back');
+  assert.deepEqual(game.view().log, [], 'coming back starts empty');
+
+  // A choice repeated forever cannot grow the log without end.
+  for (let i = 0; i < 40; i++) game.act('wait');
+  assert.equal(game.view().log.length, 30);
+
+  // A save from before the log existed still shows its last notices.
+  const old = JSON.parse(JSON.stringify(game.state)) as GameState;
+  delete old.log;
+  const continued = new Game(story);
+  continued.restore(old);
+  assert.deepEqual(continued.view().log, [{ notices: [{ kind: 'message', text: 'Grub yawns.' }] }]);
+});
+
 test('a blow is roll + attack - defense, and a six always hurts', () => {
   assert.equal(strike(4, 3, 1).damage, 6);
   assert.equal(strike(2, 1, 9).damage, 0);

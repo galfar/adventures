@@ -251,6 +251,18 @@ p {
   border-left-color: var(--bad);
 }
 
+/* What the hero picked on this page ("➤ Who are you?"), so a conversation reads in turns. */
+.notice-choice {
+  margin-top: 0.4rem;
+  padding: 0 0.2rem;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.notice-choice:first-child {
+  margin-top: 0;
+}
+
 /* ---- Buttons ------------------------------------------------------------------- */
 
 .actions {

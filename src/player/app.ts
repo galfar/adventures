@@ -207,7 +207,16 @@ export class PlayerApp {
         image && h('figure', { class: 'page-image' }, h('img', { src: image, alt: '' })),
         view.page.title && h('h2', { class: 'page-title' }, view.page.title),
         h('div', { class: 'page-text lead' }, view.texts.flatMap(renderText)),
-        view.notices.length > 0 && h('ul', { class: 'notices' }, view.notices.map((n) => this.notice(n))),
+        // Everything that happened on this page, so a conversation stays readable.
+        view.log.length > 0 &&
+          h(
+            'ul',
+            { class: 'notices' },
+            view.log.flatMap((entry) => [
+              entry.choice !== undefined && h('li', { class: 'notice-choice' }, `➤ ${entry.choice}`),
+              ...entry.notices.map((n) => this.notice(n)),
+            ]),
+          ),
         view.combat && this.combat(view, view.combat),
         (view.status === 'playing' || view.status === 'moving') && h('div', { class: 'divider' }),
         view.status === 'moving' &&
@@ -232,6 +241,8 @@ export class PlayerApp {
       ),
       newPage,
     );
+    // On the same page the log grows; keep the newest line on screen (phones).
+    if (!newPage) this.root.querySelector('.notices > :last-child')?.scrollIntoView({ block: 'nearest' });
   }
 
   private run(command: () => boolean): void {
