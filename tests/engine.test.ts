@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { Game } from '../src/shared/engine/game.ts';
+import { pageNeeds } from '../src/shared/engine/needs.ts';
 import { strike } from '../src/shared/engine/rules.ts';
 import type { GameState } from '../src/shared/engine/state.ts';
 import type { Page, Story } from '../src/shared/format/types.ts';
@@ -233,6 +234,64 @@ test('a conversation stays on the page, with the picked choices as the hero\'s l
   const continued = new Game(story);
   continued.restore(old);
   assert.deepEqual(continued.view().log, [{ notices: [{ kind: 'message', text: 'Grub yawns.' }] }]);
+});
+
+test('page needs list what a page asks about, without its own choices and fight', () => {
+  const story = loadSample('goblin-cave');
+  const shop = pageNeeds(story, 'shop');
+  assert.deepEqual([...shop.counters], [['gold', 8]], 'the largest price, so every purchase can be tried');
+  assert.deepEqual([...shop.did], [], 'its own conversation is played, not skipped');
+
+  const tunnel = pageNeeds(story, 'tunnel');
+  assert.deepEqual([...tunnel.did], ['cave-torch']);
+
+  const custom = pageNeeds(
+    miniStory([
+      {
+        id: 'a',
+        text: 'A',
+        combat: { enemy: { name: 'Rat', hp: 1, attack: 0, defense: 0 } },
+        extraTexts: [{ when: { type: 'won', page: 'a' }, text: 'The rat is gone.' }],
+        actions: [
+          { id: 'x', label: 'X', when: { type: 'and', all: [{ type: 'hasItem', item: 'key', count: 2 }, { type: 'visited', page: 'b' }] } },
+          { id: 'y', label: 'Y', when: { type: 'compare', left: 5, op: '<', right: { stat: 'attack' } } },
+        ],
+      },
+      { id: 'b', text: 'B', actions: [] },
+    ]),
+    'a',
+  );
+  assert.deepEqual([...custom.items], [['key', 2]]);
+  assert.deepEqual([...custom.visited], ['b']);
+  assert.deepEqual([...custom.won], [], 'its own fight is tested by playing it');
+  assert.deepEqual([...custom.stats], [['attack', 6]], '5 < attack needs attack 6');
+});
+
+test('play-testing: a test kit changes the start, test tools bend the rules', () => {
+  const story = miniStory([
+    { id: 'a', text: 'A', onFirstVisit: [{ type: 'if', when: { type: 'hasItem', item: 'key' }, then: [{ type: 'message', text: 'Key!' }] }], actions: [{ id: 'go', label: 'Go', target: 'b' }] },
+    { id: 'b', text: 'B', combat: { enemy: { name: 'Rat', hp: 99, attack: 0, defense: 99 } }, actions: [{ id: 'back', label: 'Back', target: 'a' }] },
+  ]);
+  const game = new Game(story);
+  game.start({}, 1, { items: { key: 2 }, stats: { hp: 50 }, won: ['b'], did: ['back'] });
+  assert.equal(game.state.items.key, 2);
+  assert.equal(game.state.stats.hp, 50);
+  assert.equal(game.state.stats.maxHp, 50, 'the maximum grows with the hit points');
+  assert.deepEqual(game.view().notices, [{ kind: 'message', text: 'Key!' }], 'the kit is there before the first page');
+
+  assert.equal(game.testEffect({ type: 'takeItem', item: 'key', count: 2 }), true);
+  assert.equal(game.state.items.key, undefined);
+  game.state.won = {};
+  game.testEffect({ type: 'goto', page: 'b' });
+  assert.equal(game.view().status, 'combat');
+  assert.equal(game.testWinFight(), true);
+  game.finishCombat();
+  assert.equal(game.view().status, 'playing');
+
+  game.testEffect({ type: 'setStat', stat: 'hp', to: 0 });
+  assert.equal(game.view().status, 'dead');
+  game.testEffect({ type: 'setStat', stat: 'hp', to: 5 });
+  assert.equal(game.view().status, 'playing', 'testing goes on after death');
 });
 
 test('a blow is roll + attack - defense, and a six always hurts', () => {

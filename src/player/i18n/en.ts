@@ -66,6 +66,20 @@ export const en = {
   itemLost: 'You lost: {item}',
   itemUsed: 'You used: {item}',
   brokenLink: 'This path is not finished yet.',
+
+  // Play-testing from the editor (never shown in a normal game)
+  testTitle: '🛠 Testing this page',
+  testIntro: 'This page asks about these things. Set them as if the hero had played the way here.',
+  testDid: 'already picked: {name}',
+  testVisited: 'has been to: {name}',
+  testWon: 'won the fight at: {name}',
+  testAsUsual: 'as usual',
+  testTools: 'Test tools',
+  testToolsIntro: 'Only in the editor’s play-test. Changes happen right away.',
+  testItems: 'Items',
+  testWinFight: 'Win this fight',
+  testGoTo: 'Go to page',
+  testGo: 'Go',
 };
 
 export type Messages = typeof en;

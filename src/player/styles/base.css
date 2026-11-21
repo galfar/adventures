@@ -573,6 +573,74 @@ button.card:hover {
   white-space: nowrap;
 }
 
+/* ---- Play-testing from the editor ---------------------------------------------- */
+
+.test-kit {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0 0;
+}
+
+.test-kit h2 {
+  margin-bottom: 0;
+}
+
+.test-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.7rem;
+  background: var(--note-bg);
+  border-radius: var(--radius-small);
+}
+
+.test-row > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.test-flag > span {
+  flex: 1;
+}
+
+.test-row input[type='number'],
+.test-row select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper-bg);
+  border: var(--button-border);
+  border-radius: var(--radius-small);
+  padding: 0.2rem 0.4rem;
+}
+
+.test-row input[type='number'] {
+  width: 5.5rem;
+}
+
+.test-row select {
+  max-width: 12rem;
+}
+
+.test-row input[type='checkbox'] {
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: var(--accent);
+}
+
+.test-items {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  list-style: none;
+}
+
+.test-count {
+  min-width: 1.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---- Library (list of adventures) ---------------------------------------------- */
 
 .library-list {

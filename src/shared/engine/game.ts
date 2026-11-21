@@ -16,6 +16,7 @@ import type {
   Story,
 } from '../format/types.ts';
 import { buildIndex, effectiveStat, test, type StoryIndex } from './conditions.ts';
+import type { TestKit } from './needs.ts';
 import { DIE_SIDES, nextRandom, strike } from './rules.ts';
 import { isNotice, LOG_LIMIT, STATE_VERSION, type GameEvent, type GameState, type LogEntry, type Notice, type RoundLog } from './state.ts';
 
@@ -100,8 +101,11 @@ export class Game {
     this.index = buildIndex(story);
   }
 
-  /** Starts a new game. The seed makes the dice repeatable (used by tests). */
-  start(choice: SetupChoice = {}, seed: number = (Math.random() * 2 ** 32) | 0): void {
+  /**
+   * Starts a new game. The seed makes the dice repeatable (used by tests). A test kit
+   * (play-testing from a page) changes the hero's start before the first page is entered.
+   */
+  start(choice: SetupChoice = {}, seed: number = (Math.random() * 2 ** 32) | 0, testKit?: TestKit): void {
     const story = this.story;
     const profession = story.professions.find((p) => p.id === choice.profession) ?? story.professions[0];
     const kit: StartingKit = profession ?? story.hero;
@@ -125,6 +129,7 @@ export class Game {
       const picked = (choice.items ?? []).filter((id) => kit.choose!.from.includes(id));
       for (const id of new Set(picked.slice(0, kit.choose.count))) this.changeItem(id, 1, true);
     }
+    if (testKit) this.applyTestKit(testKit);
     this.enterPage(story.startPage);
     this.record();
   }
@@ -236,6 +241,54 @@ export class Game {
     this.leaveTo(this.state.combat ? undefined : jump);
     this.record();
     return true;
+  }
+
+  // ---- Play-testing ---------------------------------------------------------------
+  // Only the editor's play-test uses these. They bend the rules on purpose.
+
+  /**
+   * Applies one effect right now, for example "give a key" or "set gold to 20". A `goto`
+   * moves straight there. Also works after death, so testing can go on.
+   */
+  testEffect(effect: Effect): boolean {
+    const state = this.state;
+    state.over = undefined;
+    if (!this.begin()) return false;
+    const jump = this.runEffect(effect);
+    if (jump !== undefined) {
+      state.moveTo = undefined;
+      this.enterPage(jump);
+    }
+    this.checkDeath();
+    this.record();
+    return true;
+  }
+
+  /** Ends the current fight as won; the player then confirms as usual. */
+  testWinFight(): boolean {
+    const combat = this.state.combat;
+    if (!combat || combat.outcome) return false;
+    combat.enemyHp = 0;
+    combat.outcome = 'win';
+    return true;
+  }
+
+  private applyTestKit(kit: TestKit): void {
+    const state = this.state;
+    for (const [id, count] of Object.entries(kit.items ?? {})) {
+      if (!this.index.items.has(id)) continue;
+      if (count > 0) state.items[id] = count;
+      else delete state.items[id];
+    }
+    for (const [id, value] of Object.entries(kit.counters ?? {})) if (this.index.counters.has(id)) state.counters[id] = value;
+    for (const [stat, value] of Object.entries(kit.stats ?? {}) as [StatName, number][]) {
+      state.stats[stat] = value;
+      // Hit points above the maximum would be cut back; raise the maximum instead.
+      if (stat === 'hp') state.stats.maxHp = Math.max(state.stats.maxHp, value);
+    }
+    for (const id of kit.did ?? []) state.done[id] = Math.max(1, state.done[id] ?? 0);
+    for (const id of kit.visited ?? []) state.visits[id] = Math.max(1, state.visits[id] ?? 0);
+    for (const id of kit.won ?? []) state.won[id] = true;
   }
 
   // ---- View -----------------------------------------------------------------------

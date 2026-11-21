@@ -28,6 +28,8 @@ interface LibraryEntry {
 function play(pkg: StoryPackage, fromLibrary: boolean, preview = false): void {
   new PlayerApp(root, pkg, {
     preview,
+    // "Play from this page": the story already starts there (see loadFromProject).
+    testPage: preview && params.has('page') ? pkg.story.startPage : undefined,
     theme: params.get('theme') ?? undefined,
     onExit: fromLibrary ? () => location.assign(location.pathname) : undefined,
   });

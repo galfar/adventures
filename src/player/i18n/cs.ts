@@ -60,4 +60,17 @@ export const cs: Messages = {
   itemLost: 'Ztrácíš: {item}',
   itemUsed: 'Používáš: {item}',
   brokenLink: 'Tahle cesta ještě není hotová.',
+
+  testTitle: '🛠 Testování této stránky',
+  testIntro: 'Tahle stránka se ptá na tyto věci. Nastav je, jako by sem hrdina došel hraním.',
+  testDid: 'už vybral: {name}',
+  testVisited: 'už byl na: {name}',
+  testWon: 'vyhrál souboj na: {name}',
+  testAsUsual: 'jako obvykle',
+  testTools: 'Nástroje pro testování',
+  testToolsIntro: 'Jen při zkoušení v editoru. Změny platí hned.',
+  testItems: 'Předměty',
+  testWinFight: 'Vyhrát tento souboj',
+  testGoTo: 'Jít na stránku',
+  testGo: 'Jít',
 };

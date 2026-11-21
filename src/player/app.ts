@@ -1,6 +1,7 @@
 import { Game, type CombatView, type GameView } from '../shared/engine/game.ts';
+import { pageNeeds, type TestKit } from '../shared/engine/needs.ts';
 import type { Notice, StrikeLog } from '../shared/engine/state.ts';
-import type { ItemId, ProfessionId, StartingKit, Story } from '../shared/format/types.ts';
+import type { CounterId, Effect, ItemId, PageId, ProfessionId, StartingKit, StatName, Story } from '../shared/format/types.ts';
 import { confirmDialog, h, openDialog, renderText } from '../shared/dom.ts';
 import { translator, type Translate } from './i18n/index.ts';
 import type { StoryPackage } from './loader.ts';
@@ -12,8 +13,19 @@ export interface PlayerOptions {
   onExit?: () => void;
   /** Overrides the story's visual style (handy for trying styles out). */
   theme?: string;
-  /** Play-testing from the editor: nothing is saved and the title page is skipped. */
+  /** Play-testing from the editor: nothing is saved, the title page is skipped, test tools appear. */
   preview?: boolean;
+  /** Play-testing from this page: the hero screen offers what the page asks about. */
+  testPage?: PageId;
+}
+
+/** The hero screen's test settings, kept while the author clicks around on that screen. */
+interface TestDraft {
+  items: Map<ItemId, number>;
+  counters: Map<CounterId, number>;
+  /** Missing value: the hero's usual number. */
+  stats: Map<StatName, number | undefined>;
+  flags: { kind: 'did' | 'visited' | 'won'; id: string; on: boolean }[];
 }
 
 /**
@@ -30,6 +42,8 @@ export class PlayerApp {
   private readonly game: Game;
   /** The page shown by the previous draw, to scroll up only when the page changes. */
   private shownPage: string | undefined;
+  /** Only when play-testing from a page that asks about something. */
+  private testDraft: TestDraft | undefined;
 
   constructor(root: HTMLElement, pkg: StoryPackage, options: PlayerOptions = {}) {
     this.root = root;
@@ -41,6 +55,7 @@ export class PlayerApp {
     document.title = this.story.title;
     document.documentElement.lang = this.story.language;
     applyTheme(options.theme ?? this.story.theme);
+    if (options.preview && options.testPage !== undefined) this.testDraft = this.makeTestDraft(options.testPage);
     if (options.preview) this.showSetup();
     else this.showTitle();
   }
@@ -99,7 +114,7 @@ export class PlayerApp {
     profession = chosen?.id;
     const toPick = Math.min(kit.choose?.count ?? 0, kit.choose?.from.length ?? 0);
 
-    if (!hasProfessions && toPick === 0) {
+    if (!hasProfessions && toPick === 0 && !this.testDraft) {
       this.startGame({});
       return;
     }
@@ -161,6 +176,7 @@ export class PlayerApp {
               );
             }),
           ),
+        this.testDraft && this.testSection(this.testDraft),
         h('div', { class: 'divider' }),
         h(
           'nav',
@@ -180,9 +196,194 @@ export class PlayerApp {
   }
 
   private startGame(choice: { profession?: ProfessionId; items?: ItemId[] }): void {
-    this.game.start(choice);
+    this.game.start(choice, undefined, this.testDraft && this.testKit(this.testDraft));
     this.shownPage = undefined;
     this.afterCommand();
+  }
+
+  // ---- Play-testing ---------------------------------------------------------------
+
+  /** What the tested page asks about, ready to change. Undefined when it asks about nothing. */
+  private makeTestDraft(pageId: PageId): TestDraft | undefined {
+    const needs = pageNeeds(this.story, pageId);
+    const draft: TestDraft = {
+      items: new Map(needs.items),
+      counters: new Map([...needs.counters].map(([id, value]) => [id, value ?? this.game.index.counters.get(id)?.start ?? 0])),
+      stats: new Map(needs.stats),
+      flags: [
+        ...[...needs.did].map((id) => ({ kind: 'did' as const, id, on: true })),
+        ...[...needs.visited].map((id) => ({ kind: 'visited' as const, id, on: true })),
+        ...[...needs.won].map((id) => ({ kind: 'won' as const, id, on: true })),
+      ],
+    };
+    // Only things the story still has: a deleted item cannot be given.
+    for (const id of draft.items.keys()) if (!this.game.index.items.has(id)) draft.items.delete(id);
+    for (const id of draft.counters.keys()) if (!this.game.index.counters.has(id)) draft.counters.delete(id);
+    const empty = draft.items.size + draft.counters.size + draft.stats.size + draft.flags.length === 0;
+    return empty ? undefined : draft;
+  }
+
+  private testKit(draft: TestDraft): TestKit {
+    const on = (kind: TestDraft['flags'][number]['kind']) => draft.flags.filter((f) => f.kind === kind && f.on).map((f) => f.id);
+    return {
+      items: Object.fromEntries(draft.items),
+      counters: Object.fromEntries(draft.counters),
+      stats: Object.fromEntries([...draft.stats].filter(([, value]) => value !== undefined)),
+      did: on('did'),
+      visited: on('visited'),
+      won: on('won'),
+    };
+  }
+
+  private pageName(id: PageId): string {
+    const page = this.game.index.pages.get(id);
+    return page ? page.title || '?' : id;
+  }
+
+  private actionName(id: string): string {
+    for (const page of this.story.pages) {
+      const action = page.actions.find((a) => a.id === id);
+      if (action) return `${page.title || '?'}: ${action.label}`;
+    }
+    return id;
+  }
+
+  /** A number field that reports a whole number (or undefined when emptied). */
+  private numberField(label: string, value: number | undefined, onChange: (value: number | undefined) => void, placeholder?: string): HTMLElement {
+    const input = h('input', { type: 'number', step: '1', value: value === undefined ? '' : String(value), placeholder: placeholder ?? '' });
+    input.addEventListener('change', () => {
+      const parsed = Number.parseInt(input.value, 10);
+      onChange(Number.isFinite(parsed) ? parsed : undefined);
+    });
+    return h('label', { class: 'test-row' }, h('span', null, label), input);
+  }
+
+  /** On the hero screen: what the tested page asks about. */
+  private testSection(draft: TestDraft): HTMLElement {
+    const { t } = this;
+    const index = this.game.index;
+    return h(
+      'section',
+      { class: 'test-kit' },
+      h('h2', null, t('testTitle')),
+      h('p', { class: 'muted' }, t('testIntro')),
+      [...draft.items].map(([id, count]) =>
+        this.numberField(`🎒 ${index.items.get(id)?.name ?? id}`, count, (value) => draft.items.set(id, Math.max(0, value ?? 0))),
+      ),
+      [...draft.counters].map(([id, value]) => {
+        const def = index.counters.get(id);
+        return this.numberField(`${def?.icon ?? ''} ${def?.name ?? id}`.trim(), value, (next) => draft.counters.set(id, next ?? def?.start ?? 0));
+      }),
+      [...draft.stats].map(([stat, value]) => this.numberField(t(stat), value, (next) => draft.stats.set(stat, next), t('testAsUsual'))),
+      draft.flags.map((flag) => {
+        const box = h('input', { type: 'checkbox' });
+        box.checked = flag.on;
+        box.addEventListener('change', () => (flag.on = box.checked));
+        const name = flag.kind === 'did' ? this.actionName(flag.id) : this.pageName(flag.id);
+        const text = flag.kind === 'did' ? t('testDid', { name }) : flag.kind === 'visited' ? t('testVisited', { name }) : t('testWon', { name });
+        return h('label', { class: 'test-row test-flag' }, box, h('span', null, text));
+      }),
+    );
+  }
+
+  /** The 🛠 dialog during a play-test: change the hero and the world right away. */
+  private openTestTools(): void {
+    const { t } = this;
+    const game = this.game;
+    const dialog = openDialog('dialog sheet', () => []);
+    const body = dialog.firstElementChild!;
+    const apply = (effect: Effect) => {
+      if (!game.testEffect(effect)) return;
+      this.afterCommand();
+      fill();
+    };
+    const fill = () => {
+      const view = game.view();
+      const state = game.state;
+      const pageSelect = h(
+        'select',
+        null,
+        this.story.pages.map((page) => h('option', { value: page.id, selected: page.id === view.page.id }, page.title || '?')),
+      );
+      body.replaceChildren(
+        h('h3', null, `🛠 ${t('testTools')}`),
+        h('p', { class: 'muted' }, t('testToolsIntro')),
+        view.combat && !view.combat.outcome ?
+          h(
+            'div',
+            { class: 'actions' },
+            h(
+              'button',
+              {
+                class: 'action',
+                onclick: () => {
+                  if (!game.testWinFight()) return;
+                  this.afterCommand();
+                  dialog.close();
+                },
+              },
+              `⚔️ ${t('testWinFight')}`,
+            ),
+          ) : '',
+        h(
+          'div',
+          { class: 'test-kit' },
+          this.numberField(`❤️ ${t('hp')}`, state.stats.hp, (value) => {
+            if (value === undefined) return;
+            // Above the maximum, raise the maximum too, or the hit points would be cut back.
+            if (value > state.stats.maxHp) game.testEffect({ type: 'setStat', stat: 'maxHp', to: value });
+            apply({ type: 'setStat', stat: 'hp', to: value });
+          }),
+          (['attack', 'defense'] as const).map((stat) =>
+            this.numberField(`${stat === 'attack' ? '⚔️' : '🛡️'} ${t(stat)}`, state.stats[stat], (value) => {
+              if (value !== undefined) apply({ type: 'setStat', stat, to: value });
+            }),
+          ),
+          view.counters.map(({ def, value }) =>
+            this.numberField(`${def.icon ?? ''} ${def.name}`.trim(), value, (next) => {
+              if (next !== undefined) apply({ type: 'setCounter', counter: def.id, to: next });
+            }),
+          ),
+        ),
+        this.story.items.length > 0 ? h('h4', null, t('testItems')) : '',
+        this.story.items.length === 0 ? '' :
+          h(
+            'ul',
+            { class: 'test-items' },
+            this.story.items.map((def) => {
+              const count = state.items[def.id] ?? 0;
+              return h(
+                'li',
+                { class: 'test-row' },
+                h('span', null, def.name || '?'),
+                h('button', { class: 'action small', 'aria-label': `− ${def.name}`, disabled: count === 0, onclick: () => apply({ type: 'takeItem', item: def.id }) }, '−'),
+                h('strong', { class: 'test-count' }, count),
+                h('button', { class: 'action small', 'aria-label': `+ ${def.name}`, onclick: () => apply({ type: 'giveItem', item: def.id }) }, '+'),
+              );
+            }),
+          ),
+        h(
+          'div',
+          { class: 'test-row' },
+          h('span', null, t('testGoTo')),
+          pageSelect,
+          h(
+            'button',
+            {
+              class: 'action small',
+              onclick: () => {
+                if (!game.testEffect({ type: 'goto', page: pageSelect.value })) return;
+                this.afterCommand();
+                dialog.close();
+              },
+            },
+            t('testGo'),
+          ),
+        ),
+        h('div', { class: 'dialog-buttons' }, h('button', { class: 'action', onclick: () => dialog.close() }, t('close'))),
+      );
+    };
+    fill();
   }
 
   // ---- The game -------------------------------------------------------------------
@@ -270,6 +471,8 @@ export class PlayerApp {
         this.stat('🛡️', t('defense'), view.hero.defense),
         view.counters.filter((c) => c.def.show).map((c) => this.stat(c.def.icon ?? '', c.def.name, c.value)),
       ),
+      this.options.preview &&
+        h('button', { class: 'icon-button', 'aria-label': t('testTools'), title: t('testTools'), onclick: () => this.openTestTools() }, '🛠'),
       h(
         'button',
         { class: 'icon-button', 'aria-label': t('bag'), title: t('bag'), onclick: () => this.openBag() },

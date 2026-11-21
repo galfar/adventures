@@ -50,6 +50,7 @@ src/shared/engine/game.ts       Game class: commands and view
 src/shared/engine/conditions.ts condition evaluation, item bonuses
 src/shared/engine/rules.ts      fight formula, seeded random numbers
 src/shared/engine/state.ts      saved-game shape, events and notices
+src/shared/engine/needs.ts      what a page asks about, and test kits for play-testing
 src/shared/zip.ts               ZIP reader and writer on the browser's own compression
 src/shared/db.ts                editor projects in IndexedDB (the player reads them to play-test)
 src/shared/dom.ts, i18n.ts      small helpers shared by both apps
@@ -78,7 +79,7 @@ is fetched only when the block editor is first opened.
 | Command | What it does |
 |---|---|
 | `npm run dev` | player at http://localhost:5173, editor at http://localhost:5173/editor.html |
-| `npm test` | engine, ZIP, editor and block-conversion tests (41 tests) |
+| `npm test` | engine, ZIP, editor and block-conversion tests (43 tests) |
 | `npm run template` | rebuild `public/player-template.html` (also run by `dev` and `build`) |
 | `npm run build` | type-check, then build the static site into `dist/` |
 
@@ -210,7 +211,7 @@ warning. The editor will show these in the author's language and jump to the pla
 
 `npm test` covers professions and starting items, movement, conditions, locked and one-time
 actions, `goto` / `if` / `chance`, the fight formula, winning, losing, fleeing, items, death,
-broken links, save and continue, waiting with "Continue" after a message, the page's log, and 300 random play-throughs of each sample adventure that must
+broken links, save and continue, waiting with "Continue" after a message, the page's log, page needs and test tools, and 300 random play-throughs of each sample adventure that must
 all reach an ending without getting stuck.
 
 ## 4. Player (built)
@@ -319,13 +320,13 @@ Nothing plays sound yet. The design leaves room for it without changing what exi
 | Built (steps 2 and 3) | Not built yet |
 |---|---|
 | Project list: new, open, copy, delete to a list it can be put back from, start from an example | "Save as a file": one HTML file or a ZIP; "open an adventure file" on the project list |
-| Map: pages and arrows, pan, zoom, drag pages, drag-to-connect, drag-to-create | Test panel to set the bag and counters before play-testing |
-| Page panel: name, text, picture, choices, fight, ending, start page, extra texts | "Tidy up" automatic layout of the map |
-| Blocks for the rules of a choice, arrival effects, fight outcomes, extra-text conditions and item use | Backup reminder |
-| Lists of items, counters, and the hero with professions (top bar: 🎒 🔢 🧙) | "New item…" directly from a block's drop-down list |
+| Map: pages and arrows, pan, zoom, drag pages, drag-to-connect, drag-to-create | "Tidy up" automatic layout of the map |
+| Page panel: name, text, picture, choices, fight, ending, start page, extra texts | Backup reminder |
+| Blocks for the rules of a choice, arrival effects, fight outcomes, extra-text conditions and item use | "New item…" directly from a block's drop-down list |
+| Lists of items, counters, and the hero with professions (top bar: 🎒 🔢 🧙) | |
 | Story settings: name, author, description, language, look, cover | |
 | Autosave, undo and redo that survive a reload, trash for pages, older versions | |
-| Hints with jump-to-page; play-testing from the start or from a page | |
+| Hints with jump-to-page; play-testing from the start or from a page, with "what this page needs" and test tools | |
 | Czech and English texts, including the blocks; one-tab-at-a-time lock | |
 
 The rest of this section describes the design; where the built part differs, it says so.
@@ -472,8 +473,25 @@ map. Clicking a hint opens the place.
 
 "Play" opens the real player in a frame over the editor, reading the project straight from
 IndexedDB (`index.html?preview=<project>&page=<page>`). It starts from the open page, or from
-the start. Test games are not saved and do not touch the saved game of the real player. Still
-planned: a small panel to set the bag, counters and stats before a test.
+the start. Test games are not saved and do not touch the saved game of the real player.
+
+Two helpers cover pages that need things found elsewhere (a key from another page, a won
+fight). Neither exists in a normal game or in exports.
+
+- **What this page needs.** Playing from a page, the hero screen adds "🛠 Testing this page":
+  - It lists what that page's conditions ask about, with values that make them true:
+    items and how many, counters, stats, and "already picked" / "has been to" / "won the
+    fight at" for other pages. For example, "Gold ≥ 8" gives 8.
+  - The page's own choices and its own fight are left out, because those are what is being
+    tested.
+  - `pageNeeds()` in `src/shared/engine/needs.ts` reads the page. The result is passed to
+    `Game.start()` as a `TestKit`, applied before the first page is entered, so arrival
+    effects see it.
+- **Test tools (🛠 in the status bar, play-test only).**
+  - Set hit points, attack, defense and counters; add or remove any item.
+  - Win the current fight, or jump to any page.
+  - Changes happen at once through `Game.testEffect()` / `testWinFight()`. These run a
+    normal effect (so changes show in the page's log) and also work after death.
 
 ### Export and import
 
@@ -538,7 +556,6 @@ Ways an author shares a finished adventure:
 All four planned steps are built. Remaining polish, in rough order of value:
 
 - a backup reminder in the editor (browser storage can be cleared);
-- a test panel to set the bag and counters before play-testing;
 - "new item…" directly from a block's drop-down list;
 - automatic tidy-up of the map;
 - sound and music (section 6).
