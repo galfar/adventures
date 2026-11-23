@@ -1,5 +1,8 @@
 # Adventures
 
+**Try it live:** [play the adventures](https://galfar.github.io/adventures/) ·
+[open the editor](https://galfar.github.io/adventures/editor.html)
+
 A framework for making and playing gamebook-style adventures, aimed at young authors
 (about 10–15 years old) who know Scratch- or Blockly-style tools.
 
@@ -89,6 +92,10 @@ when picked:
 
 `npm run build` produces a folder of static files that works from any path on any static
 host, such as GitHub Pages or a school web server.
+
+On GitHub, `.github/workflows/pages.yml` does this by itself: every push to the main branch
+runs the tests, builds, and publishes `dist/` on GitHub Pages. Turn it on once with
+Settings → Pages → Source: "GitHub Actions" (or `gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow`).
 
 To add an adventure to the player's built-in library, put its folder (`story.json` and
 `images/`) into `public/adventures/` and list it in `public/adventures/index.json`. Any

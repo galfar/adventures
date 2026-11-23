@@ -1,0 +1,51 @@
+# Builds the player and the editor and publishes them on GitHub Pages.
+# Runs on every push to the main branch, and by hand from the Actions tab.
+# The tests must pass first, so a broken engine never goes online.
+name: Publish on GitHub Pages
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One publish at a time; a newer push replaces one that is still waiting.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # The tests run TypeScript directly, which needs Node 24 or newer.
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+      # Type-check, single-file player template, then both pages into dist/.
+      - run: npm run build
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
